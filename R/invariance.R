@@ -37,11 +37,18 @@ ledger_status <- function(audit, invariance) {
   NA_character_
 }
 
+# Record a verdict on a ledger invariance. When more than one attack targets the
+# same invariance, the ledger keeps the worst verdict (an invariance is only as solid
+# as its weakest attack): unstable > not_resolvable > stable.
 mark_tested <- function(audit, invariance, verdict) {
+  rank <- c(stable = 0L, not_resolvable = 1L, unstable = 2L)
   for (i in seq_along(audit$ledger)) {
     if (audit$ledger[[i]]$invariance == invariance) {
+      old <- audit$ledger[[i]]$verdict
+      combined <- if (isTRUE(audit$ledger[[i]]$tested) && !is.null(old) &&
+                      rank[[old]] > rank[[verdict]]) old else verdict
       audit$ledger[[i]]$tested <- TRUE
-      audit$ledger[[i]]$verdict <- verdict
+      audit$ledger[[i]]$verdict <- combined
     }
   }
   audit

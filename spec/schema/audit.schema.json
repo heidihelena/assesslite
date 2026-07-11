@@ -119,6 +119,30 @@
               }
             }
           },
+          "scenarios": {
+            "type": "object",
+            "description": "present for a confounding_scenarios attack: the bias-analysis array",
+            "properties": {
+              "target": { "type": ["number", "null"] },
+              "confounder_prevalence": { "type": ["number", "null"] },
+              "plausible_rr_uy": { "type": ["number", "null"] },
+              "plausible_delta": { "type": ["number", "null"] },
+              "minimal_tipping": { "type": ["object", "null"] },
+              "cells": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "rr_uy": { "type": "number" },
+                    "delta": { "type": "number" },
+                    "bias_factor": { "type": "number" },
+                    "adjusted_estimate": { "type": "number" },
+                    "tips": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
           "overlap": {
             "type": "object",
             "description": "present for a positivity_check attack: propensity overlap diagnostic",

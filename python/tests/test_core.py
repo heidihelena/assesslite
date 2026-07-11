@@ -384,6 +384,39 @@ def test_declare_graph_rejects_cycle_and_graph_check_needs_graph():
         a.test(["graph_check"])
 
 
+def test_confounding_scenarios_maps_tipping_and_composes():
+    from assesslite.scenarios import bias_factor
+    assert round(bias_factor(2, 0.2, 0.2), 3) == 1.167
+
+    def mk(effect, n=12000, seed=3):
+        rng = np.random.default_rng(seed); age = rng.normal(65, 9, n)
+        x = rng.binomial(1, 1/(1+np.exp(0.02*(age-65))))
+        lp = effect*x + 0.03*(age-65); te = rng.exponential(1/(0.05*np.exp(lp))); tc = rng.uniform(1, 6, n)
+        d = pd.DataFrame({"time": np.minimum(te, tc), "status": (te <= tc).astype(int), "x": x, "age": age})
+        a = StructuralAudit(d, outcome=("time", "status"), exposure="x", covariates=["age"])
+        a.assume("unobserved_confounding", "u", "c")
+        return a
+
+    weak = mk(-0.14); weak.test(["confounding_scenarios"])
+    r = weak.tests["confounding_scenarios"]
+    assert r["verdict"] == "unstable"
+    assert len(r["scenarios"]["cells"]) == 16
+    strong = mk(-0.9, n=4000, seed=1); strong.test(["confounding_scenarios"])
+    assert strong.tests["confounding_scenarios"]["verdict"] == "stable"
+
+    both = mk(-0.14); both.test(["confounding_sensitivity", "confounding_scenarios"])
+    led = [l for l in both.ledger if l["invariance"] == "unobserved_confounding"][0]
+    assert led["verdict"] == "unstable"
+
+
+def test_confounding_scenarios_undefined_on_linear_scale():
+    d = pd.DataFrame({"y": np.random.default_rng(0).normal(size=300),
+                      "x": np.random.default_rng(1).binomial(1, 0.5, 300)})
+    a = StructuralAudit(d, outcome="y", exposure="x")
+    with pytest.raises(ValueError, match="ratio-scale"):
+        a.test(["confounding_scenarios"])
+
+
 def test_confounding_sensitivity_undefined_on_linear_scale():
     d = pd.DataFrame({"y": np.random.default_rng(0).normal(0, 1, 300),
                       "x": np.random.default_rng(1).binomial(1, 0.5, 300)})

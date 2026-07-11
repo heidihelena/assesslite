@@ -138,6 +138,34 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("scenarios") is not None:
+            import math as _m
+            sc = t["scenarios"]
+            rrs = sorted({c["rr_uy"] for c in sc["cells"]})
+            dls = sorted({c["delta"] for c in sc["cells"]})
+            cellmap = {(c["rr_uy"], c["delta"]): c for c in sc["cells"]}
+            header = ("<tr><th>&Delta; prevalence \\ RR<sub>UY</sub></th>"
+                      + "".join(f"<th>{rr:.1f}</th>" for rr in rrs) + "</tr>")
+            rows = []
+            for dl in dls:
+                tds = []
+                for rr in rrs:
+                    c = cellmap[(rr, dl)]
+                    bg = " style='background:#f3d9d4'" if c["tips"] else ""
+                    tds.append(f"<td{bg}>{_m.exp(c['adjusted_estimate']):.2f}</td>")
+                rows.append(f"<tr><th>{dl:.2f}</th>{''.join(tds)}</tr>")
+            tgt = "no effect (null)" if sc["target"] is None else f"ratio {sc['target']:.2f}"
+            cap = (f"<p class='meta'>adjusted {_esc(a['scale'])} (ratio scale) after an unmeasured "
+                   f"confounder at prevalence {sc['confounder_prevalence']:.2f}; shaded cells tip past "
+                   f"{tgt}. Plausible bound: RR<sub>UY</sub> &le; {sc['plausible_rr_uy']:.1f}, "
+                   f"&Delta; &le; {sc['plausible_delta']:.2f}</p>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{cap}"
+                "<table>{hdr}{body}</table><p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), cap=cap, hdr=header,
+                    body="".join(rows), reading=_esc(t["reading"])))
+            continue
         if t.get("spillover") is not None:
             sp = t["spillover"]
             nb = ("not estimated" if sp["neighbor_exposure_coef"] is None

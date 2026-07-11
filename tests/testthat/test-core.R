@@ -193,6 +193,33 @@ test_that("E-value matches the published value and confounding_sensitivity runs"
   expect_equal(res$sensitivity$e_value_point, evalue_from_ratio(res$sensitivity$rr_point))
 })
 
+test_that("confounding_scenarios maps the tipping point and composes with the E-value", {
+  expect_equal(round(bias_factor(2, 0.2, 0.2), 3), 1.167)
+  mk <- function(effect, n = 12000, seed = 3) {
+    set.seed(seed); age <- rnorm(n, 65, 9); x <- rbinom(n, 1, plogis(-0.02 * (age - 65)))
+    lp <- effect * x + 0.03 * (age - 65); te <- rexp(n, 0.05 * exp(lp)); tc <- runif(n, 1, 6)
+    d <- data.frame(time = pmin(te, tc), status = as.integer(te <= tc), x = x, age = age)
+    a <- structural_audit(d, outcome = c("time", "status"), exposure = "x", covariates = "age")
+    assume_invariance(a, "unobserved_confounding", "u", "c")
+  }
+  weak <- test_invariance(mk(-0.14), tests = "confounding_scenarios")$tests$confounding_scenarios
+  expect_equal(weak$verdict, "unstable")        # a plausible confounder reaches the null
+  expect_equal(length(weak$scenarios$cells), 16L)
+  strong <- test_invariance(mk(-0.9, n = 4000, seed = 1), tests = "confounding_scenarios")$tests$confounding_scenarios
+  expect_equal(strong$verdict, "stable")        # strong effect resists plausible confounding
+
+  # both confounding attacks target unobserved_confounding; ledger keeps the worse verdict
+  a <- test_invariance(mk(-0.14), tests = c("confounding_sensitivity", "confounding_scenarios"))
+  led <- Filter(function(l) l$invariance == "unobserved_confounding", a$ledger)[[1]]
+  expect_equal(led$verdict, "unstable")
+})
+
+test_that("confounding_scenarios is undefined on a linear scale", {
+  d <- data.frame(y = rnorm(300), x = rbinom(300, 1, 0.5))
+  a <- structural_audit(d, outcome = "y", exposure = "x")
+  expect_error(test_confounding_scenarios(a), "ratio-scale")
+})
+
 test_that("confounding_sensitivity is undefined on a linear scale", {
   d <- data.frame(y = rnorm(300), x = rbinom(300, 1, 0.5))
   a <- structural_audit(d, outcome = "y", exposure = "x")
