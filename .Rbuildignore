@@ -10,3 +10,5 @@
 ^\.git$
 ^\.zenodo\.json$
 ^CITATION\.cff$
+^paper$
+^CONTRIBUTING\.md$
