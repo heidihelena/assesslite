@@ -77,6 +77,21 @@ render_report <- function(audit, path) {
   }, character(1)), collapse = "\n")
 
   test_blocks <- paste0(vapply(audit$tests, function(t) {
+    if (!is.null(t$adjustment)) {
+      aj <- t$adjustment
+      setfmt <- function(x) if (length(x) == 0) "&#8709;" else esc(paste(x, collapse = ", "))
+      body <- sprintf("<table>
+         <tr><th>exposure &rarr; outcome</th><td>%s &rarr; %s</td></tr>
+         <tr><td>adjusted for</td><td>{%s}</td></tr>
+         <tr><td>sufficient set (from graph)</td><td>{%s}</td></tr>
+         <tr><td>missing (graph says adjust, you did not)</td><td>{%s}</td></tr>
+         <tr><td>over-adjustment (descendant of exposure)</td><td>{%s}</td></tr></table>",
+        esc(aj$exposure), esc(aj$outcome), setfmt(aj$adjusted), setfmt(aj$sufficient_set),
+        setfmt(aj$missing), setfmt(aj$over_adjustment))
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
+    }
     if (!is.null(t$implications)) {
       chip_of <- c(consistent = "ok", violated = "bad",
                    not_resolvable = "nr", not_testable = "nr")

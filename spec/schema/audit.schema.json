@@ -115,6 +115,20 @@
               }
             }
           },
+          "adjustment": {
+            "type": "object",
+            "description": "present for an adjustment_check attack: the backdoor-criterion assessment of the adjusted covariate set",
+            "properties": {
+              "exposure": { "type": ["string", "null"] },
+              "outcome": { "type": ["string", "null"] },
+              "adjusted": { "type": "array", "items": { "type": "string" } },
+              "sufficient_set": { "type": "array", "items": { "type": "string" } },
+              "missing": { "type": "array", "items": { "type": "string" } },
+              "over_adjustment": { "type": "array", "items": { "type": "string" } },
+              "valid": { "type": ["boolean", "null"] },
+              "open_backdoor": { "type": ["boolean", "null"] }
+            }
+          },
           "reading": { "type": "string" }
         }
       }

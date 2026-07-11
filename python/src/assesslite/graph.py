@@ -148,3 +148,142 @@ def test_graph_check(assessment, alpha: float = 0.05, effect_floor: float = 0.1)
     return {"test": "graph_check", "invariance": "causal_graph", "verdict": verdict,
             "metrics": None, "implications": imps,
             "variants": pd.DataFrame(columns=_COLS), "n_failed": 0, "reading": reading}
+
+
+# --- d-separation and the backdoor criterion (core spec v0.2, spec/graph/adjustment.md) ---
+
+def _children_of(parents: dict) -> dict:
+    ch = {v: [] for v in parents}
+    for v, ps in parents.items():
+        for p in ps:
+            ch[p].append(v)
+    return ch
+
+
+def ancestors_of(parents: dict, S) -> set:
+    seen, stack = set(), list(S)
+    while stack:
+        v = stack.pop()
+        if v in seen:
+            continue
+        seen.add(v)
+        stack.extend(parents.get(v, []))
+    return seen
+
+
+def descendants_of(parents: dict, node: str) -> set:
+    ch = _children_of(parents)
+    seen, stack = set(), list(ch.get(node, []))
+    while stack:
+        v = stack.pop()
+        if v in seen:
+            continue
+        seen.add(v)
+        stack.extend(ch.get(v, []))
+    return seen
+
+
+def d_separated(parents: dict, X: str, Y: str, Z) -> bool:
+    """Moralised ancestral graph test: are X and Y d-separated given Z?"""
+    Z = set(Z)
+    A = ancestors_of(parents, {X, Y} | Z)
+    adj = {v: set() for v in A}
+
+    def link(a, b):
+        adj[a].add(b); adj[b].add(a)
+
+    for v in A:
+        pv = [p for p in parents.get(v, []) if p in A]
+        for p in pv:
+            link(v, p)
+        for i in range(len(pv)):
+            for j in range(i + 1, len(pv)):
+                link(pv[i], pv[j])
+    keep = A - Z
+    if X not in keep or Y not in keep:
+        return True
+    seen, stack = set(), [X]
+    while stack:
+        v = stack.pop()
+        if v in seen:
+            continue
+        seen.add(v)
+        stack.extend(n for n in adj[v] if n in keep)
+    return Y not in seen
+
+
+def backdoor_valid(parents: dict, X: str, Y: str, Z) -> bool:
+    Z = list(Z)
+    if set(Z) & descendants_of(parents, X):
+        return False
+    pxbar = {v: [p for p in ps if p != X] for v, ps in parents.items()}
+    return d_separated(pxbar, X, Y, Z)
+
+
+def test_adjustment_check(assessment, outcome_node=None) -> dict:
+    g = assessment.graph
+    if g is None:
+        raise ValueError("adjustment_check needs a declared graph; call declare_graph() first")
+    parents = g["parents"]
+    X = assessment.analysis["exposure"]
+    oc = assessment.analysis["outcome_cols"]
+    if outcome_node is None:
+        cand = [oc[1], oc[0]] if len(oc) == 2 else [oc[0]]
+        outcome_node = next((c for c in cand if c in g["nodes"]), None)
+    Y = outcome_node
+    adjusted = list(assessment.analysis["covariates"])
+    empty = pd.DataFrame(columns=_COLS)
+
+    def mk(verdict, reading, adj):
+        return {"test": "adjustment_check", "invariance": "adjustment_sufficiency",
+                "verdict": verdict, "metrics": None, "adjustment": adj,
+                "variants": empty, "n_failed": 0, "reading": reading}
+
+    if Y is None or X not in g["nodes"] or Y not in g["nodes"]:
+        return mk("not_resolvable",
+                  f"cannot check the adjustment set: exposure '{X}' or outcome "
+                  f"'{Y if Y else '<none>'}' is not a node in the declared graph",
+                  {"exposure": X, "outcome": Y, "adjusted": adjusted, "sufficient_set": [],
+                   "valid": None, "open_backdoor": None, "over_adjustment": [], "missing": []})
+
+    Z = [c for c in adjusted if c in g["nodes"]]
+    desc_X = descendants_of(parents, X)
+    over = [c for c in adjusted if c in desc_X]
+    pxbar = {v: [p for p in ps if p != X] for v, ps in parents.items()}
+    open_backdoor = not d_separated(pxbar, X, Y, Z)
+    valid = (len(over) == 0) and not open_backdoor
+
+    suff = [p for p in parents[X] if p in g["nodes"]]
+    if backdoor_valid(parents, X, Y, suff):
+        changed = True
+        while changed:
+            changed = False
+            for z in list(suff):
+                if backdoor_valid(parents, X, Y, [s for s in suff if s != z]):
+                    suff = [s for s in suff if s != z]
+                    changed = True
+                    break
+    missing = [s for s in suff if s not in Z]
+
+    adj = {"exposure": X, "outcome": Y, "adjusted": adjusted, "sufficient_set": suff,
+           "valid": valid, "open_backdoor": open_backdoor,
+           "over_adjustment": over, "missing": missing}
+
+    def fmt(s):
+        return ", ".join(s) if s else "empty"
+
+    if valid:
+        reading = (f"the adjusted covariates {{{fmt(Z)}}} satisfy the backdoor criterion for "
+                   f"{X} -> {Y} in the declared graph; the adjustment agrees with the graph "
+                   f"(a sufficient set is {{{fmt(suff)}}})")
+        return mk("stable", reading, adj)
+
+    problems = []
+    if open_backdoor:
+        problems.append(f"a backdoor path from {X} to {Y} is left open (missing: {{{fmt(missing)}}})")
+    if over:
+        problems.append(f"it conditions on {{{fmt(over)}}}, which is a descendant of the exposure "
+                        f"(over-adjustment / collider or mediator bias)")
+    reading = ("the adjustment does not agree with the declared graph: " + "; and ".join(problems)
+               + f". A sufficient set per the graph is {{{fmt(suff)}}}")
+    return mk("unstable", reading, adj)

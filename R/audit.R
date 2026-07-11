@@ -12,6 +12,7 @@ invariance_vocabulary <- function() {
     "subgroup_transport",
     "unobserved_confounding",
     "causal_graph",
+    "adjustment_sufficiency",
     "spatial_translation",
     "network_relabelling")
 }

@@ -42,9 +42,17 @@ of an audit file is a `spec/` change and bumps the spec version.
   `dagitty`), both R and Python; audit records carry an `implications` block that validates
   against the shared schema. Spec: `spec/graph/graph-check.md`. Correctly leaves colliders
   unconditioned and skips multi-level-categorical endpoints as not-testable rather than
-  mis-testing them. Still to add: deriving the minimal adjustment set from the graph and
-  flagging when it disagrees with the covariates actually adjusted (the `dagitty` adjustment-set
-  half); a non-linear conditional-independence test beyond partial correlation.
+  mis-testing them.
+- **DAG adjustment set** — **done (v0.2.0).** New `adjustment_sufficiency` invariance attacked by
+  `adjustment_check`: given the declared graph, does the covariate set the model adjusted for
+  satisfy the backdoor criterion? Reports open backdoor paths (under-adjustment), descendants of
+  the exposure that were adjusted (over-adjustment / collider or mediator bias), and a minimal
+  sufficient set derived from the graph. Backdoor validity via a self-contained d-separation
+  engine (moralised ancestral graph), verified on the confounding triangle, mediator, and M-bias
+  cases. Both R and Python; audit records carry an `adjustment` block that validates against the
+  shared schema. Spec: `spec/graph/adjustment.md`. Still to add: latent-node support (marking
+  graph variables unmeasured, so no valid observed adjustment set may exist → not identifiable);
+  a non-linear conditional-independence test for `graph_check` beyond partial correlation.
 - **Simulation-based violation** (spec `simulated_violation`): parametrically inject a
   declared violation at increasing strength, record where the estimate crosses the
   decision threshold. This is the direct estimator-failure map.

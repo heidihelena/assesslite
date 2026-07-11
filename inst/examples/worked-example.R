@@ -75,11 +75,14 @@ audit <- declare_graph(audit, c("age -> adherence", "stage -> adherence",
 audit <- assume_invariance(audit, "causal_graph",
   rationale = "the adjustment set is read off this declared DAG",
   licenses  = "treating {age, sex, stage} as sufficient adjustment for the adherence effect")
+audit <- assume_invariance(audit, "adjustment_sufficiency",
+  rationale = "the covariates adjusted should match the graph's backdoor set",
+  licenses  = "reading the adjusted hazard ratio as the causal effect")
 
 # --- attack the ledger --------------------------------------------------------
 audit <- test_invariance(audit,
   tests = c("unit_permutation", "cluster_holdout", "temporal_split",
-            "subgroup_stability", "confounding_sensitivity", "graph_check"),
+            "subgroup_stability", "confounding_sensitivity", "graph_check", "adjustment_check"),
   seed = 7, confounding_benchmark = 1.25)
 
 # --- decide, export, report ---------------------------------------------------

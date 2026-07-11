@@ -89,6 +89,23 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("adjustment") is not None:
+            aj = t["adjustment"]
+            fmt = lambda s: _esc(", ".join(s)) if s else "&#8709;"
+            body = (
+                "<table>"
+                f"<tr><th>exposure &rarr; outcome</th><td>{_esc(aj['exposure'])} &rarr; {_esc(str(aj['outcome']))}</td></tr>"
+                f"<tr><td>adjusted for</td><td>{{{fmt(aj['adjusted'])}}}</td></tr>"
+                f"<tr><td>sufficient set (from graph)</td><td>{{{fmt(aj['sufficient_set'])}}}</td></tr>"
+                f"<tr><td>missing (graph says adjust, you did not)</td><td>{{{fmt(aj['missing'])}}}</td></tr>"
+                f"<tr><td>over-adjustment (descendant of exposure)</td><td>{{{fmt(aj['over_adjustment'])}}}</td></tr></table>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{body}"
+                "<p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), body=body,
+                    reading=_esc(t["reading"])))
+            continue
         if t.get("implications") is not None:
             chip_of = {"consistent": "ok", "violated": "bad",
                        "not_resolvable": "nr", "not_testable": "nr"}

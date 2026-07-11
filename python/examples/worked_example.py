@@ -76,10 +76,13 @@ a.declare_graph(["age -> adherence", "stage -> adherence",
 a.assume("causal_graph",
          rationale="the adjustment set is read off this declared DAG",
          licenses="treating {age, sex, stage} as sufficient adjustment for the adherence effect")
+a.assume("adjustment_sufficiency",
+         rationale="the covariates adjusted should match the graph's backdoor set",
+         licenses="reading the adjusted hazard ratio as the causal effect")
 
 # --- attack, decide, export, report ------------------------------------------
 a.test(["unit_permutation", "cluster_holdout", "temporal_split",
-        "subgroup_stability", "confounding_sensitivity", "graph_check"],
+        "subgroup_stability", "confounding_sensitivity", "graph_check", "adjustment_check"],
        seed=7, confounding_benchmark=1.25)
 a.decide(abstain_if={"estimate_sign_changes": True, "effect_crosses_threshold": None})
 print(a)
