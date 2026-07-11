@@ -42,3 +42,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/dist
+          skip-existing: true   # re-releasing a tag (e.g. to trigger Zenodo) won't fail on an already-published version

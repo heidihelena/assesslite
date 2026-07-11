@@ -8,3 +8,5 @@
 ^LICENSE$
 ^\.gitignore$
 ^\.git$
+^\.zenodo\.json$
+^CITATION\.cff$

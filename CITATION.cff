@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "AssessLite: test what your analysis depends on"
+abstract: >-
+  Structural assumption assessment for causal analysis, for R and Python.
+  AssessLite makes the invariance assumptions behind a result explicit, attacks
+  them with transformation tests, returns three-way verdicts (stable, unstable,
+  or not resolvable at this n), decides proceed / conditional / abstain, and
+  exports an auditable JSON record plus an HTML report.
+type: software
+authors:
+  - family-names: "Andersén"
+    given-names: "Heidi Helena"
+    orcid: "https://orcid.org/0000-0001-5923-5865"
+version: "0.1.0"
+date-released: "2026-07-11"
+license: Apache-2.0
+repository-code: "https://github.com/heidihelena/assesslite"
+url: "https://github.com/heidihelena/assesslite"
+doi: "10.5281/zenodo.21306424"
+keywords:
+  - causal inference
+  - sensitivity analysis
+  - invariance
+  - structural assumptions
+  - epidemiology
+  - reproducibility

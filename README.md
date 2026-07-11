@@ -1,5 +1,9 @@
 # AssessLite
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21306424.svg)](https://doi.org/10.5281/zenodo.21306424)
+[![PyPI](https://img.shields.io/pypi/v/assesslite.svg)](https://pypi.org/project/assesslite/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 **Test what your analysis depends on.**
 
 Structural assumption assessment for causal analysis, for R and Python.
@@ -123,6 +127,16 @@ lattice view.
   survived the attacks that were run, at the precision the data allowed.
 - Not a replacement for scientific judgment about which invariances are defensible — it is
   the ledger that makes that judgment visible and attackable.
+
+## Citation
+
+Archived on Zenodo. Cite the concept DOI (always resolves to the latest version):
+
+> Andersén, H. H. AssessLite: test what your analysis depends on.
+> https://doi.org/10.5281/zenodo.21306424
+
+Version 0.1.0 is `10.5281/zenodo.21306425`. See `CITATION.cff` for machine-readable
+metadata (GitHub's "Cite this repository" uses it).
 
 ## License
 

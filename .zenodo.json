@@ -1,0 +1,23 @@
+{
+  "title": "AssessLite: test what your analysis depends on",
+  "description": "Structural assumption assessment for causal analysis, for R and Python. AssessLite makes the invariance assumptions behind a causal result explicit, attacks them with transformation tests (unit permutation, cluster holdout, temporal split, subgroup stability), returns three-way verdicts (stable, unstable, or not resolvable at this n), decides proceed / conditional / abstain, and exports an auditable JSON record plus an HTML report. The R and Python engines implement one shared specification; audit records from either validate against the same JSON Schema.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "Apache-2.0",
+  "creators": [
+    {
+      "name": "Andersén, Heidi Helena",
+      "orcid": "0000-0001-5923-5865"
+    }
+  ],
+  "keywords": [
+    "causal inference",
+    "sensitivity analysis",
+    "invariance",
+    "structural assumptions",
+    "epidemiology",
+    "reproducibility",
+    "R",
+    "Python"
+  ]
+}
