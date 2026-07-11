@@ -23,6 +23,7 @@ audit_as_list <- function(audit) {
       im$conditioning <- I(as.character(im$conditioning)); im
     })
     if (!is.null(t$adjustment)) obj$adjustment <- t$adjustment
+    if (!is.null(t$spillover)) obj$spillover <- t$spillover
     obj
   }))
 

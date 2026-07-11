@@ -140,6 +140,22 @@ render_report <- function(audit, path) {
                      esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
                      esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
     }
+    if (!is.null(t$spillover)) {
+      sp <- t$spillover
+      nb <- if (is.na(sp$neighbor_exposure_coef)) "not estimated" else
+        sprintf("%.3f [%.3f, %.3f]", sp$neighbor_exposure_coef, sp$ci_low, sp$ci_high)
+      body <- sprintf("<table>
+         <tr><th>neighbour-exposure effect</th><td>%s</td></tr>
+         <tr><td>exposure estimate (ignoring neighbours)</td><td>%.3f</td></tr>
+         <tr><td>exposure estimate (accounting for neighbours)</td><td>%s</td></tr>
+         <tr><td>units with &ge;1 neighbour</td><td>%d</td></tr></table>",
+        nb, sp$exposure_estimate,
+        if (is.na(sp$exposure_estimate_adjusted)) "&mdash;" else sprintf("%.3f", sp$exposure_estimate_adjusted),
+        sp$n_with_neighbors)
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
+    }
     if (!is.null(t$sensitivity)) {
       s <- t$sensitivity
       body <- sprintf(

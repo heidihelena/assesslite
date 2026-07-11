@@ -31,16 +31,26 @@ invariance_vocabulary <- function() {
 #' @param estimand plain-language statement of the target quantity.
 structural_audit <- function(data, outcome, exposure, covariates = character(),
                              cluster = NULL, time = NULL, subgroups = character(),
-                             coords = NULL, unit = "unit", estimand = NULL) {
+                             coords = NULL, unit_id = NULL, edges = NULL,
+                             unit = "unit", estimand = NULL) {
   stopifnot(is.data.frame(data))
   if (!is.null(coords) && length(coords) != 2)
     stop("coords must be two column names, c(x, y) or c(lon, lat)")
-  needed <- c(outcome, exposure, covariates, cluster, time, subgroups, coords)
+  needed <- c(outcome, exposure, covariates, cluster, time, subgroups, coords, unit_id)
   missing_cols <- setdiff(needed, names(data))
   if (length(missing_cols) > 0)
     stop("columns not in data: ", paste(missing_cols, collapse = ", "))
   if (!is.null(coords) && !all(vapply(coords, function(c) is.numeric(data[[c]]), logical(1))))
     stop("coords columns must be numeric")
+  network <- NULL
+  if (!is.null(edges)) {
+    if (is.null(unit_id)) stop("edges require a unit_id column naming each unit")
+    if (!is.data.frame(edges) || ncol(edges) < 2)
+      stop("edges must be a data frame of two columns of unit ids (undirected)")
+    if (anyDuplicated(as.character(data[[unit_id]])))
+      stop("unit_id values must be unique (one row per unit)")
+    network <- list(unit_id = unit_id, edges = edges[, 1:2], n_edges = nrow(edges))
+  }
 
   if (length(outcome) == 2) {
     if (!requireNamespace("survival", quietly = TRUE))
@@ -66,7 +76,10 @@ structural_audit <- function(data, outcome, exposure, covariates = character(),
                     outcome_cols = outcome, exposure = exposure,
                     covariates = covariates, estimand = estimand,
                     estimator = estimator, scale = scale),
-    structure = list(cluster = cluster, time = time, subgroups = subgroups, coords = coords),
+    structure = list(cluster = cluster, time = time, subgroups = subgroups, coords = coords,
+                     unit_id = unit_id,
+                     n_edges = if (is.null(network)) NULL else network$n_edges),
+    network = network,
     ledger = list(),
     tests = list(),
     estimate = NULL,
@@ -84,8 +97,9 @@ structural_audit <- function(data, outcome, exposure, covariates = character(),
 # condition on without pooling: Cox strata() (separate baseline hazards), or
 # GLM fixed-effect factors. Used by the assumption lattice to refit under weaker
 # pooling commitments.
-fit_estimate <- function(audit, data, strata = character()) {
+fit_estimate <- function(audit, data, strata = character(), coef_of = NULL) {
   a <- audit$analysis
+  term <- if (is.null(coef_of)) a$exposure else coef_of
   strata <- setdiff(strata, c(a$exposure, a$covariates))
   rhs <- paste(c(a$exposure, a$covariates), collapse = " + ")
   fit <- tryCatch(suppressWarnings({
@@ -106,7 +120,7 @@ fit_estimate <- function(audit, data, strata = character()) {
   if (is.null(fit)) return(NULL)
 
   cf <- stats::coef(fit)
-  idx <- which(startsWith(names(cf), a$exposure))
+  idx <- which(startsWith(names(cf), term))
   if (length(idx) == 0) return(NULL)
   idx <- idx[1]
   se <- sqrt(diag(stats::vcov(fit)))[idx]

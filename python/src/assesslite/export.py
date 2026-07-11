@@ -47,6 +47,8 @@ def audit_as_list(assessment) -> dict:
             obj["implications"] = t["implications"]
         if t.get("adjustment") is not None:
             obj["adjustment"] = t["adjustment"]
+        if t.get("spillover") is not None:
+            obj["spillover"] = t["spillover"]
         tests.append(obj)
 
     a = assessment.analysis
@@ -63,6 +65,8 @@ def audit_as_list(assessment) -> dict:
             "subgroups": list(assessment.structure["subgroups"]),
             "coords": (list(assessment.structure["coords"])
                        if assessment.structure.get("coords") else None),
+            "unit_id": assessment.structure.get("unit_id"),
+            "n_edges": assessment.structure.get("n_edges"),
         },
         "ledger": [
             {"invariance": l["invariance"], "status": l["status"], "rationale": l["rationale"],

@@ -14,6 +14,7 @@ from . import decision as _decision
 from . import export as _export
 from . import graph as _graph
 from . import lattice as _lattice
+from . import network as _network
 from . import report as _report
 from . import sensitivity as _sens
 from . import spatial as _spatial
@@ -35,7 +36,7 @@ INVARIANCE_VOCABULARY = (
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
 _KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check",
-                                 "spatial_holdout")
+                                 "spatial_holdout", "interference_check")
 
 
 def invariance_vocabulary() -> tuple:
@@ -59,7 +60,8 @@ class StructuralAudit:
 
     def __init__(self, data: pd.DataFrame, outcome, exposure: str,
                  covariates=None, cluster: str | None = None, time: str | None = None,
-                 subgroups=None, coords=None, unit: str = "unit", estimand: str | None = None):
+                 subgroups=None, coords=None, unit_id: str | None = None, edges=None,
+                 unit: str = "unit", estimand: str | None = None):
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas DataFrame")
         covariates = list(covariates or [])
@@ -72,12 +74,23 @@ class StructuralAudit:
 
         needed = outcome_cols + [exposure] + covariates + \
             ([cluster] if cluster else []) + ([time] if time else []) + subgroups + \
-            (list(coords) if coords else [])
+            (list(coords) if coords else []) + ([unit_id] if unit_id else [])
         missing = [c for c in needed if c not in data.columns]
         if missing:
             raise ValueError("columns not in data: " + ", ".join(missing))
         if coords is not None and not all(pd.api.types.is_numeric_dtype(data[c]) for c in coords):
             raise ValueError("coords columns must be numeric")
+
+        network = None
+        if edges is not None:
+            if unit_id is None:
+                raise ValueError("edges require a unit_id column naming each unit")
+            edges = pd.DataFrame(edges).iloc[:, :2]
+            if edges.shape[1] < 2:
+                raise ValueError("edges must have two columns of unit ids (undirected)")
+            if data[unit_id].astype(str).duplicated().any():
+                raise ValueError("unit_id values must be unique (one row per unit)")
+            network = {"unit_id": unit_id, "edges": edges, "n_edges": int(edges.shape[0])}
 
         estimator, scale = detect_estimator(data, outcome)
         if estimand is None:
@@ -90,7 +103,9 @@ class StructuralAudit:
             "estimator": estimator, "scale": scale,
         }
         self.structure = {"cluster": cluster, "time": time, "subgroups": subgroups,
-                          "coords": coords}
+                          "coords": coords, "unit_id": unit_id,
+                          "n_edges": network["n_edges"] if network else None}
+        self.network = network
         self.ledger: list[dict] = []
         self.tests: dict[str, dict] = {}
         self.decision: dict | None = None
@@ -183,6 +198,7 @@ class StructuralAudit:
             "graph_check": lambda: _graph.test_graph_check(self),
             "adjustment_check": lambda: _graph.test_adjustment_check(self, outcome_node),
             "spatial_holdout": lambda: _spatial.test_spatial_holdout(self, spatial_k),
+            "interference_check": lambda: _network.test_interference(self),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

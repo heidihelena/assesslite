@@ -88,6 +88,38 @@ test_that("untested assumed invariances cap the decision at conditional", {
     expect_true("temporal_translation" %in% a$decision$exposed_surface)
 })
 
+test_that("interference_check detects spillover and passes a non-interfering network", {
+  set.seed(1); n <- 1500
+  ids <- paste0("u", seq_len(n))
+  m <- n * 3; ea <- sample(ids, m, TRUE); eb <- sample(ids, m, TRUE); keep <- ea != eb
+  edges <- data.frame(a = ea[keep], b = eb[keep])
+  x <- rbinom(n, 1, 0.5); names(x) <- ids
+  ne <- neighbor_exposure(ids, x, edges); ne[is.na(ne)] <- mean(x)
+  y_int <- rbinom(n, 1, plogis(-0.5 * x + 1.2 * ne))
+  d1 <- data.frame(id = ids, x = x, y = y_int)
+  a1 <- structural_audit(d1, outcome = "y", exposure = "x", unit_id = "id", edges = edges)
+  a1 <- assume_invariance(a1, "network_relabelling", "no interference", "SUTVA")
+  a1 <- test_invariance(a1, tests = "interference_check")
+  expect_equal(a1$tests$interference_check$verdict, "unstable")
+  expect_true(!is.null(a1$tests$interference_check$spillover))
+
+  y_no <- rbinom(n, 1, plogis(-0.5 * x))
+  d2 <- data.frame(id = ids, x = x, y = y_no)
+  a2 <- structural_audit(d2, outcome = "y", exposure = "x", unit_id = "id", edges = edges)
+  a2 <- assume_invariance(a2, "network_relabelling", "n", "p")
+  a2 <- test_invariance(a2, tests = "interference_check")
+  expect_equal(a2$tests$interference_check$verdict, "stable")
+})
+
+test_that("edges require unit_id, uniqueness, and interference_check needs a network", {
+  d <- data.frame(id = c("a", "a", "b"), x = c(0, 1, 0), y = c(0, 1, 1))
+  edges <- data.frame(a = "a", b = "b")
+  expect_error(structural_audit(d, outcome = "y", exposure = "x", unit_id = "id", edges = edges), "unique")
+  a <- structural_audit(data.frame(x = rbinom(50, 1, .5), y = rbinom(50, 1, .5)),
+                        outcome = "y", exposure = "x")
+  expect_error(test_invariance(a, tests = "interference_check"), "needs a network")
+})
+
 test_that("spatial_holdout flags regional heterogeneity and passes a stationary field", {
   set.seed(2); n <- 3000
   lon <- runif(n, 0, 10); lat <- runif(n, 0, 10); x <- rbinom(n, 1, 0.5)

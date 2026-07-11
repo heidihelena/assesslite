@@ -32,6 +32,7 @@ def target_invariance(assessment, test: str) -> str:
         "graph_check": "causal_graph",
         "adjustment_check": "adjustment_sufficiency",
         "spatial_holdout": "spatial_translation",
+        "interference_check": "network_relabelling",
     }[test]
 
 

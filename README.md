@@ -135,7 +135,10 @@ All fold into the same three-way verdicts and decision rules.
 
 For spatial data, `structural_audit(..., coords = c("lon", "lat"))` enables `spatial_holdout` —
 leave-one-spatial-block-out over a grid, attacking the `spatial_translation` invariance (does any
-region drive the estimate?). See `spec/spatial.md`.
+region drive the estimate?). See `spec/spatial.md`. For networked data,
+`structural_audit(..., unit_id = "id", edges = ...)` enables `interference_check` — does the
+outcome depend on neighbours' exposure? A resolved neighbour effect is interference, attacking
+`network_relabelling` (SUTVA). See `spec/network.md`.
 
 It also builds an **assumption lattice** (`assumption_lattice()`): the pooling invariances
 ("pool across clusters / time") are the "stronger symmetry → one number" commitments, so the

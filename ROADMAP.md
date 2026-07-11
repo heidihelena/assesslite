@@ -24,6 +24,12 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.3 — in progress
 
+- **Network interference** — **done.** `structural_audit(..., unit_id = "id", edges = ...)`
+  declares a network; `interference_check` attacks the `network_relabelling` invariance by adding
+  each unit's neighbour exposure to the model and testing whether the outcome depends on it — a
+  resolved neighbour-exposure effect is interference (SUTVA fails). Three-way verdict, a
+  `spillover` block (neighbour effect, exposure estimate with/without neighbours, units with
+  neighbours), both R and Python, `structure.unit_id`/`n_edges` in the schema. Spec: `spec/network.md`.
 - **Spatial attack** — **done.** `structural_audit(..., coords = c(x, y))` declares
   coordinates; `spatial_holdout` attacks the `spatial_translation` invariance by
   leave-one-spatial-block-out over a k×k quantile grid — does any region drive the estimate?

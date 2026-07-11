@@ -25,7 +25,9 @@
         "cluster": { "type": ["string", "null"] },
         "time": { "type": ["string", "null"] },
         "subgroups": { "type": "array", "items": { "type": "string" } },
-        "coords": { "type": ["array", "null"], "items": { "type": "string" } }
+        "coords": { "type": ["array", "null"], "items": { "type": "string" } },
+        "unit_id": { "type": ["string", "null"] },
+        "n_edges": { "type": ["integer", "null"] }
       }
     },
     "ledger": {
@@ -115,6 +117,18 @@
                 "n": { "type": ["integer", "null"] },
                 "status": { "enum": ["consistent", "violated", "not_resolvable", "not_testable"] }
               }
+            }
+          },
+          "spillover": {
+            "type": "object",
+            "description": "present for an interference_check attack: the neighbour-exposure (spillover) assessment",
+            "properties": {
+              "neighbor_exposure_coef": { "type": ["number", "null"] },
+              "ci_low": { "type": ["number", "null"] },
+              "ci_high": { "type": ["number", "null"] },
+              "exposure_estimate": { "type": ["number", "null"] },
+              "exposure_estimate_adjusted": { "type": ["number", "null"] },
+              "n_with_neighbors": { "type": ["integer", "null"] }
             }
           },
           "adjustment": {
