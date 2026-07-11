@@ -4,30 +4,38 @@
 # on neighbours' exposure. A resolved neighbour-exposure effect is interference:
 # who is adjacent to whom matters, so relabelling changes the mechanism (SUTVA fails).
 
-# mean exposure among each unit's neighbours (units present in the data); NA if none
-neighbor_exposure <- function(ids, xvec, edges) {
+# neighbour-exposure summary for each unit (units present in the data); NA if no
+# neighbours. Maps: "mean" (mean neighbour exposure), "any" (1 if any neighbour
+# exposed), "sum" (number/total of exposed neighbours -- a dose).
+neighbor_exposure <- function(ids, xvec, edges, exposure_map = "mean") {
+  if (!exposure_map %in% c("mean", "any", "sum"))
+    stop("exposure_map must be one of: mean, any, sum")
   a <- as.character(edges[[1]]); b <- as.character(edges[[2]])
   from <- c(a, b); to <- c(b, a)                       # undirected
   keep <- from %in% ids & to %in% ids
   from <- from[keep]; to <- to[keep]
   ne <- stats::setNames(rep(NA_real_, length(ids)), ids)
   if (length(from) > 0) {
-    m <- tapply(xvec[to], from, mean)
+    fun <- switch(exposure_map, mean = mean,
+                  any = function(v) as.numeric(any(v > 0)),
+                  sum = sum)
+    m <- tapply(xvec[to], from, fun)
     ne[names(m)] <- as.numeric(m)
   }
   ne
 }
 
-test_interference <- function(audit) {
+test_interference <- function(audit, exposure_map = "mean") {
   net <- audit$network
   if (is.null(net))
     stop("interference_check needs a network; pass unit_id and edges to structural_audit()")
   d <- audit$data
   ids <- as.character(d[[net$unit_id]])
   xvec <- stats::setNames(d[[audit$analysis$exposure]], ids)
-  ne <- neighbor_exposure(ids, xvec, net$edges)
+  ne <- neighbor_exposure(ids, xvec, net$edges, exposure_map)
   n_with_nb <- sum(!is.na(ne))
-  ne[is.na(ne)] <- mean(xvec, na.rm = TRUE)            # neutral impute for no-neighbour units
+  ne[is.na(ne)] <- mean(ne, na.rm = TRUE)              # neutral impute for no-neighbour units
+  if (all(is.na(ne))) ne[] <- 0
 
   d2 <- d; d2$neighbor_exposure <- as.numeric(ne)
   mod <- audit
@@ -38,9 +46,12 @@ test_interference <- function(audit) {
   empty_variants <- data.frame(label = character(), estimate = numeric(), se = numeric(),
                                ci_low = numeric(), ci_high = numeric(), n = integer(),
                                stringsAsFactors = FALSE)
-  mk <- function(verdict, reading, sp) list(
-    test = "interference_check", invariance = "network_relabelling", verdict = verdict,
-    metrics = NULL, spillover = sp, variants = empty_variants, n_failed = 0L, reading = reading)
+  mk <- function(verdict, reading, sp) {
+    sp$exposure_map <- exposure_map
+    list(test = "interference_check", invariance = "network_relabelling", verdict = verdict,
+         metrics = NULL, spillover = sp, variants = empty_variants, n_failed = 0L,
+         reading = reading)
+  }
 
   if (is.null(fit_nb) || is.null(fit_x)) {
     return(mk("not_resolvable",

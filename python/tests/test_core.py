@@ -201,6 +201,40 @@ def test_interference_check_detects_spillover():
     assert a2.tests["interference_check"]["verdict"] == "stable"
 
 
+def test_exposure_maps_compute_declared_summary():
+    from assesslite.network import neighbor_exposure
+    ids = ["a", "b", "c", "d"]
+    x = {"a": 1, "b": 0, "c": 1, "d": 0}
+    edges = pd.DataFrame({"f": ["a", "a", "b"], "t": ["b", "c", "c"]})
+    m_mean = neighbor_exposure(ids, x, edges, "mean")
+    assert (m_mean["a"], m_mean["b"], m_mean["c"]) == (0.5, 1.0, 0.5)
+    m_any = neighbor_exposure(ids, x, edges, "any")
+    assert (m_any["a"], m_any["b"], m_any["c"]) == (1.0, 1.0, 1.0)
+    m_sum = neighbor_exposure(ids, x, edges, "sum")
+    assert (m_sum["a"], m_sum["b"], m_sum["c"]) == (1.0, 2.0, 1.0)
+    assert np.isnan(m_mean["d"])
+    with pytest.raises(ValueError, match="exposure_map"):
+        neighbor_exposure(ids, x, edges, "median")
+
+
+def test_interference_records_exposure_map_and_detects_contagion():
+    from assesslite.network import neighbor_exposure
+    rng = np.random.default_rng(1); n = 1200
+    ids = [f"u{i}" for i in range(n)]
+    m = n * 3; ea = rng.choice(ids, m); eb = rng.choice(ids, m); keep = ea != eb
+    edges = pd.DataFrame({"a": ea[keep], "b": eb[keep]})
+    x = rng.binomial(1, 0.3, n); xv = dict(zip(ids, x))
+    ne_map = neighbor_exposure(ids, xv, edges, "any")
+    ne = np.array([ne_map[u] for u in ids]); ne[np.isnan(ne)] = np.nanmean(ne)
+    y = rng.binomial(1, 1/(1+np.exp(-(-0.5*x + 1.5*ne))))
+    d = pd.DataFrame({"id": ids, "x": x, "y": y})
+    a = StructuralAudit(d, outcome="y", exposure="x", unit_id="id", edges=edges)
+    a.assume("network_relabelling", "n", "p").test(["interference_check"], exposure_map="any")
+    r = a.tests["interference_check"]
+    assert r["spillover"]["exposure_map"] == "any"
+    assert r["verdict"] == "unstable"
+
+
 def test_edges_require_unique_unit_id_and_interference_needs_network():
     d = pd.DataFrame({"id": ["a", "a", "b"], "x": [0, 1, 0], "y": [0, 1, 1]})
     edges = pd.DataFrame({"a": ["a"], "b": ["b"]})

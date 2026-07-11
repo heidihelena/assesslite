@@ -108,6 +108,8 @@ test_subgroup_stability <- function(audit) {
 #'   (default: the model's outcome column).
 #' @param spatial_k grid resolution (k x k blocks) for spatial_holdout (default 3).
 #' @param spatial_knn neighbours for the spatial_autocorrelation weight matrix (default 8).
+#' @param exposure_map neighbour-exposure summary for interference_check:
+#'   "mean" (default), "any", or "sum".
 #' @param tip_ratio decision threshold on the ratio scale for confounding_scenarios,
 #'   or NULL for the null (default NULL).
 #' @param confounder_prevalence assumed confounder prevalence for
@@ -118,7 +120,7 @@ test_invariance <- function(audit,
                                       "temporal_split", "subgroup_stability"),
                             seed = 1, confounding_benchmark = 1.25, outcome_node = NULL,
                             spatial_k = 3, tip_ratio = NULL, confounder_prevalence = 0.2,
-                            spatial_knn = 8) {
+                            spatial_knn = 8, exposure_map = "mean") {
   stopifnot(inherits(audit, "structural_audit"))
   set.seed(seed)
   known <- c("unit_permutation", "cluster_holdout", "temporal_split",
@@ -157,7 +159,7 @@ test_invariance <- function(audit,
       graph_check             = test_graph_check(audit),
       adjustment_check        = test_adjustment_check(audit, outcome_node),
       spatial_holdout         = test_spatial_holdout(audit, spatial_k),
-      interference_check      = test_interference(audit),
+      interference_check      = test_interference(audit, exposure_map),
       positivity_check        = test_positivity(audit),
       confounding_scenarios   = test_confounding_scenarios(audit, confounder_prevalence, tip_ratio),
       spatial_autocorrelation = test_spatial_autocorrelation(audit, spatial_knn))

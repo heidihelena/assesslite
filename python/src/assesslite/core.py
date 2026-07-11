@@ -193,7 +193,8 @@ class StructuralAudit:
     # --- attacks --------------------------------------------------------------
     def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25,
              outcome_node=None, spatial_k: int = 3, tip_ratio=None,
-             confounder_prevalence: float = 0.2, spatial_knn: int = 8):
+             confounder_prevalence: float = 0.2, spatial_knn: int = 8,
+             exposure_map: str = "mean"):
         """Run attacks against the declared invariances.
 
         tests may include confounding_sensitivity (E-value) and graph_check /
@@ -214,7 +215,7 @@ class StructuralAudit:
             "graph_check": lambda: _graph.test_graph_check(self),
             "adjustment_check": lambda: _graph.test_adjustment_check(self, outcome_node),
             "spatial_holdout": lambda: _spatial.test_spatial_holdout(self, spatial_k),
-            "interference_check": lambda: _network.test_interference(self),
+            "interference_check": lambda: _network.test_interference(self, exposure_map),
             "positivity_check": lambda: _positivity.test_positivity(self),
             "confounding_scenarios": lambda: _scenarios.test_confounding_scenarios(
                 self, confounder_prevalence, tip_ratio),
