@@ -133,6 +133,35 @@ test_that("graph_check detects consistent and violated DAG implications", {
   expect_equal(au2$tests$graph_check$verdict, "unstable")
 })
 
+test_that("backdoor / d-separation handles the textbook cases", {
+  triangle <- list(C = character(0), X = "C", Y = c("C", "X"))
+  expect_true(backdoor_valid(triangle, "X", "Y", "C"))
+  expect_false(backdoor_valid(triangle, "X", "Y", character(0)))
+  mediator <- list(X = character(0), M = "X", Y = "M")
+  expect_true(backdoor_valid(mediator, "X", "Y", character(0)))
+  # M-bias: conditioning on the collider Z opens the path
+  mbias <- list(U1 = character(0), U2 = character(0), Z = c("U1", "U2"),
+                X = "U1", Y = c("U2", "X"))
+  expect_true(backdoor_valid(mbias, "X", "Y", character(0)))
+  expect_false(backdoor_valid(mbias, "X", "Y", "Z"))
+})
+
+test_that("adjustment_check flags under- and over-adjustment against the graph", {
+  set.seed(1); n <- 1000
+  C <- rnorm(n); X <- rbinom(n, 1, plogis(C)); M <- X + rnorm(n)
+  Y <- rbinom(n, 1, plogis(0.5 * C + 0.6 * X))
+  d <- data.frame(C = C, X = X, M = M, Y = Y)
+  run <- function(covs) {
+    a <- structural_audit(d, outcome = "Y", exposure = "X", covariates = covs)
+    a <- declare_graph(a, c("C -> X", "C -> Y", "X -> Y", "X -> M"))
+    test_invariance(a, tests = "adjustment_check")$tests$adjustment_check
+  }
+  expect_equal(run("C")$verdict, "stable")
+  expect_equal(run(character(0))$verdict, "unstable")   # open backdoor
+  expect_true(run(c("C", "M"))$adjustment$over_adjustment == "M")  # mediator adjusted
+  expect_equal(run(c("C", "M"))$verdict, "unstable")
+})
+
 test_that("declare_graph rejects a cyclic graph and graph_check needs a declared graph", {
   d <- data.frame(a = rnorm(50), b = rnorm(50), y = rbinom(50, 1, 0.5))
   au <- structural_audit(d, outcome = "y", exposure = "a")

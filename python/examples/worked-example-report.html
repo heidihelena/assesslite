@@ -27,7 +27,7 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <h1>Structural audit</h1>
 <p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage · unit: patient · coxph ·
  engine assesslite-python 0.2.0 · core spec 0.1 ·
- 2026-07-11T12:08:26+0300 · data 2506 × 8,
+ 2026-07-11T13:11:52+0300 · data 2506 × 8,
  md5 93ca8ff36545</p>
 
 <h2>declared structure</h2>
@@ -44,7 +44,8 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <tr><td><strong>temporal translation</strong><br><span class='meta'>assumed</span></td><td>no major guideline revision inside the 2016-2025 window</td><td>pooling all diagnosis years; applying the estimate forward</td><td><span class="chip ok">stable</span></td></tr>
 <tr><td><strong>subgroup transport</strong><br><span class='meta'>assumed</span></td><td>adherence is expected to act through the same pathways at every stage</td><td>one pooled effect rather than stage-specific effects</td><td><span class="chip ok">stable</span></td></tr>
 <tr><td><strong>unobserved confounding</strong><br><span class='meta'>assumed</span></td><td>age, sex and stage are adjusted, but comorbidity and performance status are not measured</td><td>reading the adjusted hazard ratio as the causal effect of adherence</td><td><span class="chip ok">stable</span></td></tr>
-<tr><td><strong>causal graph</strong><br><span class='meta'>assumed</span></td><td>the adjustment set is read off this declared DAG</td><td>treating {age, sex, stage} as sufficient adjustment for the adherence effect</td><td><span class="chip ok">stable</span></td></tr></table>
+<tr><td><strong>causal graph</strong><br><span class='meta'>assumed</span></td><td>the adjustment set is read off this declared DAG</td><td>treating {age, sex, stage} as sufficient adjustment for the adherence effect</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>adjustment sufficiency</strong><br><span class='meta'>assumed</span></td><td>the covariates adjusted should match the graph's backdoor set</td><td>reading the adjusted hazard ratio as the causal effect</td><td><span class="chip ok">stable</span></td></tr></table>
 
 <h2>full-sample estimate</h2>
 <table><tr><th>scale</th><th>estimate</th><th>95% interval</th><th>n</th></tr>
@@ -78,10 +79,11 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <tr><td>sex _||_ age | {}</td><td>r = 0.041, p = 0.039</td><td><span class='chip ok'>consistent</span></td></tr>
 <tr><td>sex _||_ stage | {}</td><td>—</td><td><span class='chip nr'>not testable</span></td></tr>
 <tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.038, p = 0.058</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph — Markov-equivalent graphs share these implications</p>
+<h2>attack: adjustment check <span class="chip ok">stable</span></h2><p class='meta'>probes: adjustment sufficiency</p><table><tr><th>exposure &rarr; outcome</th><td>adherence &rarr; status</td></tr><tr><td>adjusted for</td><td>{age, sex, stage}</td></tr><tr><td>sufficient set (from graph)</td><td>{age, stage}</td></tr><tr><td>missing (graph says adjust, you did not)</td><td>{&#8709;}</td></tr><tr><td>over-adjustment (descendant of exposure)</td><td>{&#8709;}</td></tr></table><p class='reading'>the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -&gt; status in the declared graph; the adjustment agrees with the graph (a sufficient set is {age, stage})</p>
 
 <h2>decision</h2>
 <div class='decision abstain'><span class='status'>ABSTAIN</span>
-<p>the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; temporal translation; subgroup transport; unobserved confounding; causal graph</p><p><strong>Broken by</strong>: cluster_holdout</p></div>
+<p>the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; temporal translation; subgroup transport; unobserved confounding; causal graph; adjustment sufficiency</p><p><strong>Broken by</strong>: cluster_holdout</p></div>
 
 <h2>limitations text (draft)</h2>
 <div class='draft'>The analysis abstains from a pooled conclusion: the cluster_holdout attack showed that a relied-on invariance does not hold up, and the pooling it licenses has no basis in this data. Stability verdicts assess whether the conclusion survived the attacks that were run; they do not establish the truth of the assumptions. [Draft for the analyst to edit; generated by assesslite-python, core spec 0.1.]</div>

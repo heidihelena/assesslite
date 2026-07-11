@@ -181,6 +181,37 @@ def test_graph_check_detects_consistent_and_violated():
     jsonschema.validate(au.export_audit(), json.loads(SCHEMA.read_text()))
 
 
+def test_backdoor_handles_textbook_cases():
+    from assesslite.graph import backdoor_valid
+    triangle = {"C": [], "X": ["C"], "Y": ["C", "X"]}
+    assert backdoor_valid(triangle, "X", "Y", ["C"]) is True
+    assert backdoor_valid(triangle, "X", "Y", []) is False
+    mediator = {"X": [], "M": ["X"], "Y": ["M"]}
+    assert backdoor_valid(mediator, "X", "Y", []) is True
+    mbias = {"U1": [], "U2": [], "Z": ["U1", "U2"], "X": ["U1"], "Y": ["U2", "X"]}
+    assert backdoor_valid(mbias, "X", "Y", []) is True
+    assert backdoor_valid(mbias, "X", "Y", ["Z"]) is False  # collider opened
+
+
+def test_adjustment_check_flags_under_and_over_adjustment():
+    rng = np.random.default_rng(1); n = 1000
+    C = rng.normal(size=n); X = rng.binomial(1, 1/(1+np.exp(-C))); M = X + rng.normal(size=n)
+    Y = rng.binomial(1, 1/(1+np.exp(-(0.5*C + 0.6*X))))
+    d = pd.DataFrame({"C": C, "X": X, "M": M, "Y": Y})
+
+    def run(covs):
+        a = StructuralAudit(d, outcome="Y", exposure="X", covariates=covs)
+        a.declare_graph(["C -> X", "C -> Y", "X -> Y", "X -> M"])
+        a.test(["adjustment_check"])
+        return a.tests["adjustment_check"]
+
+    assert run(["C"])["verdict"] == "stable"
+    assert run([])["verdict"] == "unstable"
+    over = run(["C", "M"])
+    assert over["verdict"] == "unstable"
+    assert over["adjustment"]["over_adjustment"] == ["M"]
+
+
 def test_declare_graph_rejects_cycle_and_graph_check_needs_graph():
     d = pd.DataFrame({"a": np.random.default_rng(0).normal(size=50),
                       "b": np.random.default_rng(1).normal(size=50),

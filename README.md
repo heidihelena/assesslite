@@ -123,14 +123,17 @@ shared schema.
   move the interval to no effect (`spec/stability/sensitivity.md`).
 - `graph_check` — declare a causal DAG with `declare_graph()`, and the engine tests the
   conditional independencies the graph implies against the data (partial correlation),
-  attacking a new `causal_graph` invariance (`spec/graph/graph-check.md`). Self-contained, no
-  `dagitty` dependency.
+  attacking a new `causal_graph` invariance (`spec/graph/graph-check.md`).
+- `adjustment_check` — given the same declared DAG, does the covariate set you adjusted for
+  satisfy the backdoor criterion? Flags open backdoor paths (under-adjustment) and adjusted
+  descendants of the exposure (over-adjustment / mediator or collider bias), and reports a
+  minimal sufficient set. Self-contained d-separation engine, no `dagitty` dependency
+  (`spec/graph/adjustment.md`).
 
-Both fold into the same three-way verdicts and decision rules.
+All fold into the same three-way verdicts and decision rules.
 
-Not yet built: the DAG adjustment-set half (deriving and checking the minimal adjustment set),
-simulation-based violation testing, spatial/network transformation groups, and the assumption
-lattice view.
+Not yet built: latent-node support for the graph checks, simulation-based violation testing,
+spatial/network transformation groups, and the assumption lattice view.
 
 ## What this is not
 

@@ -20,6 +20,7 @@ true; the ledger records it so it can be attacked.
 | `subgroup_transport` | move the mechanism across declared subgroups | one pooled effect rather than subgroup-specific effects |
 | `unobserved_confounding` | none — this is the assumption that the measured adjustment set is sufficient (conditional exchangeability given measured covariates) | reading the adjusted association as the causal effect |
 | `causal_graph` | none — this is the assumption that the analyst's declared DAG is correct | licensing every adjustment-set and identification claim read off the graph |
+| `adjustment_sufficiency` | none — this is the assumption that the covariates adjusted identify the effect (satisfy the backdoor criterion in the declared graph) | reading the adjusted estimate as the causal effect |
 | `spatial_translation` | translate the spatial field | pooling across locations (not yet implemented in R) |
 | `network_relabelling` | relabel nodes preserving graph structure | pooling across network positions (not yet implemented) |
 

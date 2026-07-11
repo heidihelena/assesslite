@@ -62,6 +62,14 @@
       "licenses": "treating {age, sex, stage} as sufficient adjustment for the adherence effect",
       "tested": true,
       "verdict": "stable"
+    },
+    {
+      "invariance": "adjustment_sufficiency",
+      "status": "assumed",
+      "rationale": "the covariates adjusted should match the graph's backdoor set",
+      "licenses": "reading the adjusted hazard ratio as the causal effect",
+      "tested": true,
+      "verdict": "stable"
     }
   ],
   "estimate": {
@@ -377,12 +385,30 @@
           "status": "consistent"
         }
       ]
+    },
+    {
+      "test": "adjustment_check",
+      "invariance": "adjustment_sufficiency",
+      "verdict": "stable",
+      "variants": [],
+      "n_failed_refits": 0,
+      "reading": "the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -> status in the declared graph; the adjustment agrees with the graph (a sufficient set is {age, stage})",
+      "adjustment": {
+        "exposure": "adherence",
+        "outcome": "status",
+        "adjusted": ["age", "sex", "stage"],
+        "sufficient_set": ["age", "stage"],
+        "valid": true,
+        "open_backdoor": false,
+        "over_adjustment": [],
+        "missing": []
+      }
     }
   ],
   "decision": {
     "status": "conditional",
     "rationale": "the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)",
-    "load_bearing": ["unit_permutation_within_cluster", "cluster_exchangeability", "temporal_translation", "unobserved_confounding", "causal_graph"],
+    "load_bearing": ["unit_permutation_within_cluster", "cluster_exchangeability", "temporal_translation", "unobserved_confounding", "causal_graph", "adjustment_sufficiency"],
     "exposed_surface": ["subgroup_transport"],
     "broken_by": null,
     "abstention_rules": {
@@ -391,7 +417,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T12:46:27+0300",
+    "created": "2026-07-11T13:11:48+0300",
     "engine": "assesslite",
     "engine_version": "0.2.0",
     "platform": "R version 4.4.2 (2024-10-31)",

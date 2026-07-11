@@ -68,6 +68,14 @@
       "licenses": "treating {age, sex, stage} as sufficient adjustment for the adherence effect",
       "tested": true,
       "verdict": "stable"
+    },
+    {
+      "invariance": "adjustment_sufficiency",
+      "status": "assumed",
+      "rationale": "the covariates adjusted should match the graph's backdoor set",
+      "licenses": "reading the adjusted hazard ratio as the causal effect",
+      "tested": true,
+      "verdict": "stable"
     }
   ],
   "estimate": {
@@ -386,6 +394,31 @@
           "status": "consistent"
         }
       ]
+    },
+    {
+      "test": "adjustment_check",
+      "invariance": "adjustment_sufficiency",
+      "verdict": "stable",
+      "variants": [],
+      "n_failed_refits": 0,
+      "reading": "the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -> status in the declared graph; the adjustment agrees with the graph (a sufficient set is {age, stage})",
+      "adjustment": {
+        "exposure": "adherence",
+        "outcome": "status",
+        "adjusted": [
+          "age",
+          "sex",
+          "stage"
+        ],
+        "sufficient_set": [
+          "age",
+          "stage"
+        ],
+        "valid": true,
+        "open_backdoor": false,
+        "over_adjustment": [],
+        "missing": []
+      }
     }
   ],
   "decision": {
@@ -396,7 +429,8 @@
       "temporal_translation",
       "subgroup_transport",
       "unobserved_confounding",
-      "causal_graph"
+      "causal_graph",
+      "adjustment_sufficiency"
     ],
     "exposed_surface": [],
     "broken_by": "cluster_holdout",
@@ -406,7 +440,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T12:08:26+0300",
+    "created": "2026-07-11T13:11:52+0300",
     "engine": "assesslite-python",
     "engine_version": "0.2.0",
     "platform": "Python 3.11.8",

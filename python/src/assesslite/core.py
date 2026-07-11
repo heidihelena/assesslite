@@ -26,12 +26,13 @@ INVARIANCE_VOCABULARY = (
     "subgroup_transport",
     "unobserved_confounding",
     "causal_graph",
+    "adjustment_sufficiency",
     "spatial_translation",
     "network_relabelling",
 )
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
-_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check")
+_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check")
 
 
 def invariance_vocabulary() -> tuple:
@@ -138,11 +139,14 @@ class StructuralAudit:
                 l["verdict"] = verdict
 
     # --- attacks --------------------------------------------------------------
-    def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25):
+    def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25,
+             outcome_node=None):
         """Run attacks against the declared invariances.
 
-        tests may include confounding_sensitivity (E-value); confounding_benchmark
-        is the plausible unmeasured-confounding strength on the risk-ratio scale.
+        tests may include confounding_sensitivity (E-value) and graph_check /
+        adjustment_check (which need a graph declared via declare_graph).
+        outcome_node names the graph node to treat as the outcome for
+        adjustment_check (defaults to the model's outcome column).
         """
         bad = [t for t in tests if t not in _KNOWN_TESTS]
         if bad:
@@ -155,6 +159,7 @@ class StructuralAudit:
             "subgroup_stability": lambda: _tf.test_subgroup_stability(self),
             "confounding_sensitivity": lambda: _sens.test_confounding_sensitivity(self, confounding_benchmark),
             "graph_check": lambda: _graph.test_graph_check(self),
+            "adjustment_check": lambda: _graph.test_adjustment_check(self, outcome_node),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

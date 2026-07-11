@@ -30,6 +30,7 @@ def target_invariance(assessment, test: str) -> str:
         "subgroup_stability": "subgroup_transport",
         "confounding_sensitivity": "unobserved_confounding",
         "graph_check": "causal_graph",
+        "adjustment_check": "adjustment_sufficiency",
     }[test]
 
 

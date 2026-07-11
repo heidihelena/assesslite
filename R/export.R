@@ -22,6 +22,7 @@ audit_as_list <- function(audit) {
     if (!is.null(t$implications)) obj$implications <- lapply(t$implications, function(im) {
       im$conditioning <- I(as.character(im$conditioning)); im
     })
+    if (!is.null(t$adjustment)) obj$adjustment <- t$adjustment
     obj
   }))
 
