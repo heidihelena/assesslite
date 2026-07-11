@@ -24,6 +24,15 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.3 — in progress
 
+- **Simulation-based violation (confounding scenario array)** — **done.**
+  `confounding_scenarios` is a deterministic bias-analysis array (Lin–Psaty–Kronmal;
+  VanderWeele–Arah): over a grid of unmeasured-confounder scenarios it shifts the estimate toward
+  the target by the implied bias and records where the conclusion tips. Distinct from the E-value
+  in three ways — a full failure-map grid rather than one number, a declarable decision threshold
+  (`tip_ratio`) not just the null, and a declared confounder prevalence and plausibility bound.
+  Both attacks target `unobserved_confounding`; `mark_tested` now keeps the **worst** verdict when
+  several attacks share an invariance. Ratio-scale, both R and Python, a `scenarios` block and a
+  rendered grid. Spec: `spec/scenarios.md`.
 - **Positivity** — **done.** `positivity_check` attacks the `positivity` invariance — the third
   identification assumption alongside exchangeability and consistency. It fits a propensity score
   P(exposure | covariates), records the weak-overlap fraction (propensity < 0.05 or > 0.95), and

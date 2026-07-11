@@ -140,6 +140,29 @@ render_report <- function(audit, path) {
                      esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
                      esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
     }
+    if (!is.null(t$scenarios)) {
+      sc <- t$scenarios
+      rrs <- sort(unique(vapply(sc$cells, function(c) c$rr_uy, numeric(1))))
+      dls <- sort(unique(vapply(sc$cells, function(c) c$delta, numeric(1))))
+      cellmap <- list()
+      for (c in sc$cells) cellmap[[paste0(c$rr_uy, "_", c$delta)]] <- c
+      header <- paste0("<tr><th>&Delta; prevalence \\ RR<sub>UY</sub></th>",
+                       paste0(sprintf("<th>%.1f</th>", rrs), collapse = ""), "</tr>")
+      body <- paste0(vapply(dls, function(dl) {
+        cellshtml <- paste0(vapply(rrs, function(rr) {
+          c <- cellmap[[paste0(rr, "_", dl)]]
+          bg <- if (isTRUE(c$tips)) " style='background:#f3d9d4'" else ""
+          sprintf("<td%s>%.2f</td>", bg, exp(c$adjusted_estimate))
+        }, character(1)), collapse = "")
+        sprintf("<tr><th>%.2f</th>%s</tr>", dl, cellshtml)
+      }, character(1)), collapse = "\n")
+      tgt <- if (is.na(sc$target)) "no effect (null)" else sprintf("ratio %.2f", sc$target)
+      cap <- sprintf("<p class='meta'>adjusted %s (ratio scale) after an unmeasured confounder at prevalence %.2f; shaded cells tip past %s. Plausible bound: RR<sub>UY</sub> &le; %.1f, &Delta; &le; %.2f</p>",
+                     esc(a$scale), sc$confounder_prevalence, tgt, sc$plausible_rr_uy, sc$plausible_delta)
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<table>%s%s</table><p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), cap, header, body, esc(t$reading)))
+    }
     if (!is.null(t$spillover)) {
       sp <- t$spillover
       nb <- if (is.na(sp$neighbor_exposure_coef)) "not estimated" else

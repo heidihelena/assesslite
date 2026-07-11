@@ -34,6 +34,7 @@ def target_invariance(assessment, test: str) -> str:
         "spatial_holdout": "spatial_translation",
         "interference_check": "network_relabelling",
         "positivity_check": "positivity",
+        "confounding_scenarios": "unobserved_confounding",
     }[test]
 
 

@@ -121,6 +121,9 @@ shared schema.
 - `confounding_sensitivity` — an E-value attack (VanderWeele & Ding) on a new
   `unobserved_confounding` invariance: how strong an unmeasured confounder would have to be to
   move the interval to no effect (`spec/stability/sensitivity.md`).
+- `confounding_scenarios` — the bias-analysis complement to the E-value: a deterministic grid of
+  unmeasured-confounder scenarios showing where the conclusion tips, targetable at a declared
+  decision threshold (`tip_ratio`), not just the null (`spec/scenarios.md`).
 - `graph_check` — declare a causal DAG with `declare_graph()`, and the engine tests the
   conditional independencies the graph implies against the data (partial correlation),
   attacking a new `causal_graph` invariance (`spec/graph/graph-check.md`).

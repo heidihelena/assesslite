@@ -17,6 +17,7 @@ from . import lattice as _lattice
 from . import network as _network
 from . import positivity as _positivity
 from . import report as _report
+from . import scenarios as _scenarios
 from . import sensitivity as _sens
 from . import spatial as _spatial
 from . import transformations as _tf
@@ -38,7 +39,8 @@ INVARIANCE_VOCABULARY = (
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
 _KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check",
-                                 "spatial_holdout", "interference_check", "positivity_check")
+                                 "spatial_holdout", "interference_check", "positivity_check",
+                                 "confounding_scenarios")
 
 
 def invariance_vocabulary() -> tuple:
@@ -172,14 +174,21 @@ class StructuralAudit:
         return None
 
     def _mark_tested(self, invariance, verdict):
+        # when more than one attack targets an invariance, keep the worst verdict
+        # (unstable > not_resolvable > stable)
+        rank = {"stable": 0, "not_resolvable": 1, "unstable": 2}
         for l in self.ledger:
             if l["invariance"] == invariance:
+                if l["tested"] and l["verdict"] is not None and rank[l["verdict"]] > rank[verdict]:
+                    pass  # keep the existing (worse) verdict
+                else:
+                    l["verdict"] = verdict
                 l["tested"] = True
-                l["verdict"] = verdict
 
     # --- attacks --------------------------------------------------------------
     def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25,
-             outcome_node=None, spatial_k: int = 3):
+             outcome_node=None, spatial_k: int = 3, tip_ratio=None,
+             confounder_prevalence: float = 0.2):
         """Run attacks against the declared invariances.
 
         tests may include confounding_sensitivity (E-value) and graph_check /
@@ -202,6 +211,8 @@ class StructuralAudit:
             "spatial_holdout": lambda: _spatial.test_spatial_holdout(self, spatial_k),
             "interference_check": lambda: _network.test_interference(self),
             "positivity_check": lambda: _positivity.test_positivity(self),
+            "confounding_scenarios": lambda: _scenarios.test_confounding_scenarios(
+                self, confounder_prevalence, tip_ratio),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

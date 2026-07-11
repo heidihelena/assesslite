@@ -25,6 +25,7 @@ audit_as_list <- function(audit) {
     if (!is.null(t$adjustment)) obj$adjustment <- t$adjustment
     if (!is.null(t$spillover)) obj$spillover <- t$spillover
     if (!is.null(t$overlap)) obj$overlap <- t$overlap
+    if (!is.null(t$scenarios)) obj$scenarios <- t$scenarios
     obj
   }))
 
