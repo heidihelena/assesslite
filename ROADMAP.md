@@ -24,6 +24,13 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.3 — in progress
 
+- **Positivity** — **done.** `positivity_check` attacks the `positivity` invariance — the third
+  identification assumption alongside exchangeability and consistency. It fits a propensity score
+  P(exposure | covariates), records the weak-overlap fraction (propensity < 0.05 or > 0.95), and
+  trims those units at increasing thresholds, refitting each time. `unstable` if trimming resolves
+  a shift; `not_resolvable` if weak overlap is ≥ 10% (positivity strained but its effect
+  unresolved); `stable` on good overlap. Both R and Python; an `overlap` block in the schema.
+  Spec: `spec/positivity.md`.
 - **Network interference** — **done.** `structural_audit(..., unit_id = "id", edges = ...)`
   declares a network; `interference_check` attacks the `network_relabelling` invariance by adding
   each unit's neighbour exposure to the model and testing whether the outcome depends on it — a

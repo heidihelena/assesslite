@@ -15,6 +15,7 @@ from . import export as _export
 from . import graph as _graph
 from . import lattice as _lattice
 from . import network as _network
+from . import positivity as _positivity
 from . import report as _report
 from . import sensitivity as _sens
 from . import spatial as _spatial
@@ -30,13 +31,14 @@ INVARIANCE_VOCABULARY = (
     "unobserved_confounding",
     "causal_graph",
     "adjustment_sufficiency",
+    "positivity",
     "spatial_translation",
     "network_relabelling",
 )
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
 _KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check",
-                                 "spatial_holdout", "interference_check")
+                                 "spatial_holdout", "interference_check", "positivity_check")
 
 
 def invariance_vocabulary() -> tuple:
@@ -199,6 +201,7 @@ class StructuralAudit:
             "adjustment_check": lambda: _graph.test_adjustment_check(self, outcome_node),
             "spatial_holdout": lambda: _spatial.test_spatial_holdout(self, spatial_k),
             "interference_check": lambda: _network.test_interference(self),
+            "positivity_check": lambda: _positivity.test_positivity(self),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

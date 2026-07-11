@@ -49,6 +49,8 @@ def audit_as_list(assessment) -> dict:
             obj["adjustment"] = t["adjustment"]
         if t.get("spillover") is not None:
             obj["spillover"] = t["spillover"]
+        if t.get("overlap") is not None:
+            obj["overlap"] = t["overlap"]
         tests.append(obj)
 
     a = assessment.analysis

@@ -119,6 +119,15 @@
               }
             }
           },
+          "overlap": {
+            "type": "object",
+            "description": "present for a positivity_check attack: propensity overlap diagnostic",
+            "properties": {
+              "frac_extreme": { "type": ["number", "null"] },
+              "n_extreme": { "type": ["integer", "null"] },
+              "n": { "type": ["integer", "null"] }
+            }
+          },
           "spillover": {
             "type": "object",
             "description": "present for an interference_check attack: the neighbour-exposure (spillover) assessment",
