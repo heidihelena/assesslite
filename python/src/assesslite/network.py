@@ -15,8 +15,12 @@ from .estimator import fit_estimate
 _COLS = ["label", "estimate", "se", "ci_low", "ci_high", "n"]
 
 
-def neighbor_exposure(ids, xvec: dict, edges: pd.DataFrame) -> dict:
-    """Mean exposure among each unit's neighbours (units present in the data); NaN if none."""
+def neighbor_exposure(ids, xvec: dict, edges: pd.DataFrame, exposure_map: str = "mean") -> dict:
+    """Neighbour-exposure summary per unit (units present in the data); NaN if no
+    neighbours. Maps: "mean" (mean neighbour exposure), "any" (1 if any neighbour
+    exposed), "sum" (number/total of exposed neighbours -- a dose)."""
+    if exposure_map not in ("mean", "any", "sum"):
+        raise ValueError("exposure_map must be one of: mean, any, sum")
     a = edges.iloc[:, 0].astype(str).to_numpy()
     b = edges.iloc[:, 1].astype(str).to_numpy()
     frm = np.concatenate([a, b])
@@ -26,10 +30,13 @@ def neighbor_exposure(ids, xvec: dict, edges: pd.DataFrame) -> dict:
     for f, t in zip(frm, to):
         if f in present and t in present:
             ne[f].append(xvec[t])
-    return {u: (float(np.mean(v)) if v else np.nan) for u, v in ne.items()}
+    fun = {"mean": lambda v: float(np.mean(v)),
+           "any": lambda v: float(any(x > 0 for x in v)),
+           "sum": lambda v: float(np.sum(v))}[exposure_map]
+    return {u: (fun(v) if v else np.nan) for u, v in ne.items()}
 
 
-def test_interference(assessment) -> dict:
+def test_interference(assessment, exposure_map: str = "mean") -> dict:
     net = assessment.network
     if net is None:
         raise ValueError("interference_check needs a network; pass unit_id and edges to "
@@ -38,10 +45,11 @@ def test_interference(assessment) -> dict:
     ids = d[net["unit_id"]].astype(str).tolist()
     exposure = assessment.analysis["exposure"]
     xvec = dict(zip(ids, d[exposure].to_numpy()))
-    ne_map = neighbor_exposure(ids, xvec, net["edges"])
+    ne_map = neighbor_exposure(ids, xvec, net["edges"], exposure_map)
     ne = np.array([ne_map[u] for u in ids], dtype=float)
     n_with_nb = int(np.sum(~np.isnan(ne)))
-    ne[np.isnan(ne)] = float(np.nanmean(list(xvec.values())))
+    fill = float(np.nanmean(ne)) if n_with_nb > 0 else 0.0
+    ne[np.isnan(ne)] = fill
 
     d2 = d.copy()
     d2["neighbor_exposure"] = ne
@@ -52,6 +60,7 @@ def test_interference(assessment) -> dict:
     empty = pd.DataFrame(columns=_COLS)
 
     def mk(verdict, reading, sp):
+        sp["exposure_map"] = exposure_map
         return {"test": "interference_check", "invariance": "network_relabelling",
                 "verdict": verdict, "metrics": None, "spillover": sp,
                 "variants": empty, "n_failed": 0, "reading": reading}

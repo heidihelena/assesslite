@@ -137,6 +137,38 @@ test_that("interference_check detects spillover and passes a non-interfering net
   expect_equal(a2$tests$interference_check$verdict, "stable")
 })
 
+test_that("exposure maps compute the declared neighbour summary", {
+  ids <- c("a", "b", "c", "d")
+  x <- c(a = 1, b = 0, c = 1, d = 0)
+  edges <- data.frame(from = c("a", "a", "b"), to = c("b", "c", "c"))
+  # neighbours: a~{b,c}, b~{a,c}, c~{a,b}, d isolated
+  m_mean <- neighbor_exposure(ids, x, edges, "mean")
+  expect_equal(unname(m_mean[c("a", "b", "c")]), c(0.5, 1, 0.5))
+  m_any <- neighbor_exposure(ids, x, edges, "any")
+  expect_equal(unname(m_any[c("a", "b", "c")]), c(1, 1, 1))
+  m_sum <- neighbor_exposure(ids, x, edges, "sum")
+  expect_equal(unname(m_sum[c("a", "b", "c")]), c(1, 2, 1))
+  expect_true(is.na(m_mean[["d"]]))
+  expect_error(neighbor_exposure(ids, x, edges, "median"), "exposure_map")
+})
+
+test_that("interference_check records the exposure map and works under any/sum", {
+  set.seed(1); n <- 1200
+  ids <- paste0("u", seq_len(n))
+  m <- n * 3; ea <- sample(ids, m, TRUE); eb <- sample(ids, m, TRUE); keep <- ea != eb
+  edges <- data.frame(a = ea[keep], b = eb[keep])
+  x <- rbinom(n, 1, 0.3); names(x) <- ids
+  ne_any <- neighbor_exposure(ids, x, edges, "any"); ne_any[is.na(ne_any)] <- mean(ne_any, na.rm = TRUE)
+  y <- rbinom(n, 1, plogis(-0.5 * x + 1.5 * ne_any))    # contagion-style interference
+  d <- data.frame(id = ids, x = x, y = y)
+  a <- structural_audit(d, outcome = "y", exposure = "x", unit_id = "id", edges = edges)
+  a <- assume_invariance(a, "network_relabelling", "n", "p")
+  a <- test_invariance(a, tests = "interference_check", exposure_map = "any")
+  r <- a$tests$interference_check
+  expect_equal(r$spillover$exposure_map, "any")
+  expect_equal(r$verdict, "unstable")
+})
+
 test_that("edges require unit_id, uniqueness, and interference_check needs a network", {
   d <- data.frame(id = c("a", "a", "b"), x = c(0, 1, 0), y = c(0, 1, 1))
   edges <- data.frame(a = "a", b = "b")

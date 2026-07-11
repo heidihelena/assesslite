@@ -170,6 +170,7 @@
             "type": "object",
             "description": "present for an interference_check attack: the neighbour-exposure (spillover) assessment",
             "properties": {
+              "exposure_map": { "type": ["string", "null"] },
               "neighbor_exposure_coef": { "type": ["number", "null"] },
               "ci_low": { "type": ["number", "null"] },
               "ci_high": { "type": ["number", "null"] },

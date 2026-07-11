@@ -33,6 +33,17 @@ be `|est_0|` on its natural scale.
 
 The `spillover` block records the neighbour-exposure coefficient and interval, the exposure
 estimate ignoring and accounting for neighbours, and the number of units with at least one
-neighbour. Neighbour exposure as mean-of-neighbours is the simplest interference summary; richer
-exposure mappings (fraction exposed above a threshold, distance-weighted, second-order
-neighbours) and a genuine node-relabelling permutation test are later additions.
+neighbour. ## Exposure mappings (v0.4 addition)
+
+The neighbour-exposure summary is declared via `exposure_map`:
+- `mean` (default) — mean exposure among neighbours: spillover scales with the exposed
+  *fraction* of the neighbourhood.
+- `any` — 1 if any neighbour is exposed: threshold/contagion-style interference.
+- `sum` — total exposed neighbours: dose-style interference that scales with degree.
+
+The chosen map is recorded in the `spillover` block. Units with no neighbours are imputed
+the mean of the computed summary (a neutral value that keeps them in the model). Running
+the attack under more than one map and keeping the worst ledger verdict (the engine keeps
+worst-of automatically when an attack is re-run) is a reasonable robustness practice.
+Distance-weighted and second-order mappings, and a genuine node-relabelling permutation
+test, remain future additions.
