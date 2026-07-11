@@ -131,6 +131,11 @@ shared schema.
   and it reports **non-identifiability** — "no measured adjustment can block this backdoor path"
   (`spec/graph/adjustment.md`). Self-contained d-separation engine, no `dagitty` dependency.
 
+- `positivity_check` — fits a propensity score and checks overlap: are there units with a
+  near-deterministic exposure, and does the finding lean on them? Attacks the `positivity`
+  invariance, the third identification assumption alongside exchangeability and consistency
+  (`spec/positivity.md`).
+
 All fold into the same three-way verdicts and decision rules.
 
 For spatial data, `structural_audit(..., coords = c("lon", "lat"))` enables `spatial_holdout` —

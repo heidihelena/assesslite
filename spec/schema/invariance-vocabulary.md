@@ -21,6 +21,7 @@ true; the ledger records it so it can be attacked.
 | `unobserved_confounding` | none — this is the assumption that the measured adjustment set is sufficient (conditional exchangeability given measured covariates) | reading the adjusted association as the causal effect |
 | `causal_graph` | none — this is the assumption that the analyst's declared DAG is correct | licensing every adjustment-set and identification claim read off the graph |
 | `adjustment_sufficiency` | none — this is the assumption that the covariates adjusted identify the effect (satisfy the backdoor criterion in the declared graph) | reading the adjusted estimate as the causal effect |
+| `positivity` | none — this is the assumption that every unit could plausibly have either exposure level given its covariates (overlap) | reading a pooled effect over the whole covariate space; attacked by `positivity_check` (propensity overlap + trimming) |
 | `spatial_translation` | translate the spatial field | pooling one mechanism across locations; attacked by `spatial_holdout` (leave-one-spatial-block-out) |
 | `network_relabelling` | relabel nodes preserving graph structure | treating units as non-interfering (SUTVA); attacked by `interference_check` (does the outcome depend on neighbours' exposure?) |
 

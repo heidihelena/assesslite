@@ -138,6 +138,35 @@ def simulate_survival(n=1200, effect=-0.7, seed=4):
                          "x": x, "age": age})
 
 
+def test_positivity_check_reads_overlap():
+    rng = np.random.default_rng(1); n = 2500; age = rng.normal(size=n)
+    x1 = rng.binomial(1, 1/(1+np.exp(-0.3*age)))
+    d1 = pd.DataFrame({"y": rng.binomial(1, 1/(1+np.exp(-(-0.6*x1+0.3*age)))), "x": x1, "age": age})
+    a1 = StructuralAudit(d1, outcome="y", exposure="x", covariates=["age"])
+    a1.assume("positivity", "p", "o").test(["positivity_check"])
+    assert a1.tests["positivity_check"]["verdict"] == "stable"
+    assert a1.tests["positivity_check"]["overlap"]["frac_extreme"] < 0.05
+
+    rng2 = np.random.default_rng(5); z = rng2.normal(size=n); x2 = rng2.binomial(1, 1/(1+np.exp(-2.8*z)))
+    d2 = pd.DataFrame({"y": rng2.binomial(1, 1/(1+np.exp(-(-0.6*x2+0.5*z)))), "x": x2, "z": z})
+    a2 = StructuralAudit(d2, outcome="y", exposure="x", covariates=["z"])
+    a2.assume("positivity", "p", "o").test(["positivity_check"])
+    assert a2.tests["positivity_check"]["verdict"] == "not_resolvable"
+    assert a2.tests["positivity_check"]["overlap"]["frac_extreme"] > 0.10
+
+
+def test_positivity_check_needs_binary_exposure_and_covariates():
+    rng = np.random.default_rng(0)
+    d = pd.DataFrame({"y": rng.binomial(1, .5, 60), "x": rng.normal(size=60), "age": rng.normal(size=60)})
+    a = StructuralAudit(d, outcome="y", exposure="x", covariates=["age"])
+    with pytest.raises(ValueError, match="binary"):
+        a.test(["positivity_check"])
+    d2 = pd.DataFrame({"y": rng.binomial(1, .5, 60), "x": rng.binomial(1, .5, 60)})
+    a2 = StructuralAudit(d2, outcome="y", exposure="x")
+    with pytest.raises(ValueError, match="covariates"):
+        a2.test(["positivity_check"])
+
+
 def test_interference_check_detects_spillover():
     from assesslite.network import neighbor_exposure
     rng = np.random.default_rng(1); n = 1500

@@ -13,6 +13,7 @@ invariance_vocabulary <- function() {
     "unobserved_confounding",
     "causal_graph",
     "adjustment_sufficiency",
+    "positivity",
     "spatial_translation",
     "network_relabelling")
 }

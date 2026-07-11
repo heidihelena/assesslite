@@ -88,6 +88,32 @@ test_that("untested assumed invariances cap the decision at conditional", {
     expect_true("temporal_translation" %in% a$decision$exposed_surface)
 })
 
+test_that("positivity_check reads good overlap as stable and poor overlap as not resolvable", {
+  set.seed(1); n <- 2500; age <- rnorm(n)
+  x1 <- rbinom(n, 1, plogis(0.3 * age))
+  d1 <- data.frame(y = rbinom(n, 1, plogis(-0.6 * x1 + 0.3 * age)), x = x1, age = age)
+  a1 <- structural_audit(d1, outcome = "y", exposure = "x", covariates = "age")
+  a1 <- test_invariance(assume_invariance(a1, "positivity", "p", "o"), tests = "positivity_check")
+  expect_equal(a1$tests$positivity_check$verdict, "stable")
+  expect_lt(a1$tests$positivity_check$overlap$frac_extreme, 0.05)
+
+  set.seed(5); z <- rnorm(n); x2 <- rbinom(n, 1, plogis(2.8 * z))
+  d2 <- data.frame(y = rbinom(n, 1, plogis(-0.6 * x2 + 0.5 * z)), x = x2, z = z)
+  a2 <- structural_audit(d2, outcome = "y", exposure = "x", covariates = "z")
+  a2 <- test_invariance(assume_invariance(a2, "positivity", "p", "o"), tests = "positivity_check")
+  expect_equal(a2$tests$positivity_check$verdict, "not_resolvable")
+  expect_gt(a2$tests$positivity_check$overlap$frac_extreme, 0.10)
+})
+
+test_that("positivity_check needs a binary exposure and covariates", {
+  d <- data.frame(y = rbinom(60, 1, .5), x = rnorm(60), age = rnorm(60))
+  a <- structural_audit(d, outcome = "y", exposure = "x", covariates = "age")
+  expect_error(test_invariance(a, tests = "positivity_check"), "binary")
+  d2 <- data.frame(y = rbinom(60, 1, .5), x = rbinom(60, 1, .5))
+  a2 <- structural_audit(d2, outcome = "y", exposure = "x")
+  expect_error(test_invariance(a2, tests = "positivity_check"), "covariates")
+})
+
 test_that("interference_check detects spillover and passes a non-interfering network", {
   set.seed(1); n <- 1500
   ids <- paste0("u", seq_len(n))
