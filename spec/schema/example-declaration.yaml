@@ -1,0 +1,41 @@
+# Example structural declaration (core spec v0.1)
+# The analyst-facing shape of an audit before any test runs. Language packages
+# construct this object from native syntax; its meaning is defined here, once.
+
+analysis:
+  unit: patient
+  outcome: survival
+  exposure: guideline_adherence
+  estimand: conditional hazard ratio for adherence, adjusted for age, sex, stage
+
+structure:
+  cluster: hospital
+  time: diagnosis_year
+  subgroups: [stage]
+
+invariances:
+  assumed:
+    - invariance: unit_permutation_within_cluster
+      rationale: patient ordering within a hospital carries no causal information
+      licenses: pooling patients within hospital into one likelihood
+    - invariance: cluster_exchangeability
+      rationale: hospitals follow the same national guideline; assumed provisionally, to be attacked
+      licenses: one pooled effect across hospitals; transport to a hospital outside the sample
+    - invariance: temporal_translation
+      rationale: no major guideline revision inside the study window
+      licenses: pooling 2015-2024 into one estimate; applying it forward
+  rejected:
+    - invariance: subgroup_transport
+      rationale: stage-specific treatment pathways differ by design
+      licenses: nothing — stage enters as structure and claims are stage-conditional
+
+tests:
+  - unit_permutation
+  - cluster_holdout
+  - temporal_split
+  - subgroup_stability
+
+decision:
+  abstain_if:
+    estimate_sign_changes: true
+    effect_crosses_threshold: null

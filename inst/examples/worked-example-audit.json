@@ -1,0 +1,331 @@
+{
+  "spec_version": "0.1",
+  "analysis": {
+    "unit": "patient",
+    "outcome": "time/status",
+    "exposure": "adherence",
+    "covariates": ["age", "sex", "stage"],
+    "estimand": "conditional hazard ratio for guideline adherence, adjusted for age, sex, stage",
+    "estimator": "coxph",
+    "scale": "log hazard ratio"
+  },
+  "structure": {
+    "cluster": "hospital",
+    "time": "diagnosis_year",
+    "subgroups": ["stage"]
+  },
+  "ledger": [
+    {
+      "invariance": "unit_permutation_within_cluster",
+      "status": "assumed",
+      "rationale": "patient ordering within a hospital carries no causal information",
+      "licenses": "pooling patients within hospital into one likelihood",
+      "tested": true,
+      "verdict": "stable"
+    },
+    {
+      "invariance": "cluster_exchangeability",
+      "status": "assumed",
+      "rationale": "hospitals follow the same national guideline; assumed provisionally so it can be attacked",
+      "licenses": "one pooled effect across hospitals; transport to a hospital outside the sample",
+      "tested": true,
+      "verdict": "stable"
+    },
+    {
+      "invariance": "temporal_translation",
+      "status": "assumed",
+      "rationale": "no major guideline revision inside the 2016-2025 window",
+      "licenses": "pooling all diagnosis years; applying the estimate forward",
+      "tested": true,
+      "verdict": "stable"
+    },
+    {
+      "invariance": "subgroup_transport",
+      "status": "assumed",
+      "rationale": "adherence is expected to act through the same pathways at every stage",
+      "licenses": "one pooled effect rather than stage-specific effects",
+      "tested": true,
+      "verdict": "not_resolvable"
+    }
+  ],
+  "estimate": {
+    "value": -0.24465565913,
+    "se": 0.063856647025,
+    "ci_low": -0.3698146873,
+    "ci_high": -0.11949663096,
+    "n": 2129
+  },
+  "tests": [
+    {
+      "test": "unit_permutation",
+      "invariance": "unit_permutation_within_cluster",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 0,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": null,
+        "null_crossings": 0
+      },
+      "variants": [
+        {
+          "label": "permutation 1",
+          "estimate": -0.24465565913,
+          "se": 0.063856647025,
+          "ci_low": -0.3698146873,
+          "ci_high": -0.11949663096,
+          "n": 2129
+        },
+        {
+          "label": "permutation 2",
+          "estimate": -0.24465565913,
+          "se": 0.063856647025,
+          "ci_low": -0.3698146873,
+          "ci_high": -0.11949663096,
+          "n": 2129
+        },
+        {
+          "label": "permutation 3",
+          "estimate": -0.24465565913,
+          "se": 0.063856647025,
+          "ci_low": -0.3698146873,
+          "ci_high": -0.11949663096,
+          "n": 2129
+        },
+        {
+          "label": "permutation 4",
+          "estimate": -0.24465565913,
+          "se": 0.063856647025,
+          "ci_low": -0.3698146873,
+          "ci_high": -0.11949663096,
+          "n": 2129
+        },
+        {
+          "label": "permutation 5",
+          "estimate": -0.24465565913,
+          "se": 0.063856647025,
+          "ci_low": -0.3698146873,
+          "ci_high": -0.11949663096,
+          "n": 2129
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically"
+    },
+    {
+      "test": "cluster_holdout",
+      "invariance": "cluster_exchangeability",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 1.6080863041,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.13065831327,
+        "null_crossings": 0
+      },
+      "variants": [
+        {
+          "label": "without hospital = H01",
+          "estimate": -0.25720103325,
+          "se": 0.066167594277,
+          "ci_low": -0.38688951803,
+          "ci_high": -0.12751254847,
+          "n": 1983
+        },
+        {
+          "label": "without hospital = H02",
+          "estimate": -0.23820356902,
+          "se": 0.066692778774,
+          "ci_low": -0.36892141542,
+          "ci_high": -0.10748572262,
+          "n": 1901
+        },
+        {
+          "label": "without hospital = H03",
+          "estimate": -0.26748090813,
+          "se": 0.065895734978,
+          "ci_low": -0.39663654869,
+          "ci_high": -0.13832526757,
+          "n": 2005
+        },
+        {
+          "label": "without hospital = H04",
+          "estimate": -0.23894912296,
+          "se": 0.066790963233,
+          "ci_low": -0.36985941089,
+          "ci_high": -0.10803883502,
+          "n": 1918
+        },
+        {
+          "label": "without hospital = H05",
+          "estimate": -0.21638271155,
+          "se": 0.067253212518,
+          "ci_low": -0.34819900808,
+          "ci_high": -0.08456641501,
+          "n": 1906
+        },
+        {
+          "label": "without hospital = H06",
+          "estimate": -0.27252786848,
+          "se": 0.066167122338,
+          "ci_low": -0.40221542826,
+          "ci_high": -0.1428403087,
+          "n": 2007
+        },
+        {
+          "label": "without hospital = H07",
+          "estimate": -0.23454197297,
+          "se": 0.066853664472,
+          "ci_low": -0.36557515534,
+          "ci_high": -0.1035087906,
+          "n": 1952
+        },
+        {
+          "label": "without hospital = H08",
+          "estimate": -0.24719868792,
+          "se": 0.066536683673,
+          "ci_low": -0.37761058792,
+          "ci_high": -0.11678678792,
+          "n": 1968
+        },
+        {
+          "label": "without hospital = H09",
+          "estimate": -0.22922668296,
+          "se": 0.066632030688,
+          "ci_low": -0.35982546311,
+          "ci_high": -0.098627902814,
+          "n": 1986
+        },
+        {
+          "label": "without hospital = H10",
+          "estimate": -0.24578977369,
+          "se": 0.066215839399,
+          "ci_low": -0.37557281891,
+          "ci_high": -0.11600672847,
+          "n": 1967
+        },
+        {
+          "label": "without hospital = H11",
+          "estimate": -0.2244195742,
+          "se": 0.06692115912,
+          "ci_low": -0.35558504607,
+          "ci_high": -0.093254102324,
+          "n": 1952
+        },
+        {
+          "label": "without hospital = H12",
+          "estimate": -0.26147562898,
+          "se": 0.068538920708,
+          "ci_low": -0.39581191357,
+          "ci_high": -0.12713934439,
+          "n": 1874
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "the largest variant shift was 1.6 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.13, so the claim of cluster exchangeability holds up under this test"
+    },
+    {
+      "test": "temporal_split",
+      "invariance": "temporal_translation",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 0.519160353,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.17746506992,
+        "null_crossings": 0
+      },
+      "variants": [
+        {
+          "label": "diagnosis_year early (2016-2020)",
+          "estimate": -0.21173066249,
+          "se": 0.089998502214,
+          "ci_low": -0.38812772683,
+          "ci_high": -0.035333598151,
+          "n": 1078
+        },
+        {
+          "label": "diagnosis_year late (2021-2025)",
+          "estimate": -0.26814720468,
+          "se": 0.091088303824,
+          "ci_low": -0.44668028017,
+          "ci_high": -0.089614129179,
+          "n": 1051
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "the largest variant shift was 0.5 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.18, so the claim of temporal translation holds up under this test"
+    },
+    {
+      "test": "subgroup_stability",
+      "invariance": "subgroup_transport",
+      "verdict": "not_resolvable",
+      "metrics": {
+        "max_shift_z": 1.9763524838,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 1,
+        "mds": 0.27819946235,
+        "null_crossings": 2
+      },
+      "variants": [
+        {
+          "label": "stage = I",
+          "estimate": 0.027827199831,
+          "se": 0.23599077355,
+          "ci_low": -0.43471471634,
+          "ci_high": 0.490369116,
+          "n": 427
+        },
+        {
+          "label": "stage = II",
+          "estimate": -0.039534955825,
+          "se": 0.17176396959,
+          "ci_low": -0.37619233623,
+          "ci_high": 0.29712242458,
+          "n": 448
+        },
+        {
+          "label": "stage = III",
+          "estimate": -0.42677695073,
+          "se": 0.1121130328,
+          "ci_low": -0.64651849501,
+          "ci_high": -0.20703540644,
+          "n": 629
+        },
+        {
+          "label": "stage = IV",
+          "estimate": -0.22981595245,
+          "se": 0.09525795813,
+          "ci_low": -0.41652155039,
+          "ci_high": -0.043110354519,
+          "n": 625
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "variant intervals are too wide to distinguish stability from instability: the smallest detectable shift (about 0.28) exceeds both the estimate (0.24) and twice its standard error; this attack is not resolvable at this n"
+    }
+  ],
+  "decision": {
+    "status": "conditional",
+    "rationale": "the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)",
+    "load_bearing": ["unit_permutation_within_cluster", "cluster_exchangeability", "temporal_translation"],
+    "exposed_surface": ["subgroup_transport"],
+    "broken_by": null,
+    "abstention_rules": {
+      "estimate_sign_changes": true,
+      "effect_crosses_threshold": null
+    }
+  },
+  "provenance": {
+    "created": "2026-07-11T10:05:48+0300",
+    "engine": "assesslite",
+    "engine_version": "0.1.0",
+    "platform": "R version 4.4.2 (2024-10-31)",
+    "spec_version": "0.1",
+    "data_fingerprint": {
+      "n_rows": 2129,
+      "n_cols": 8,
+      "md5": "5e8f3eacf7df85453aa79f6aa0bf9c87"
+    }
+  }
+}

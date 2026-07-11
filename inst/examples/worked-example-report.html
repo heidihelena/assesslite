@@ -1,0 +1,91 @@
+<!doctype html><html><head><meta charset='utf-8'>
+<title>structural audit <U+2014> conditional hazard ratio for guideline adherence, adjusted for age, sex, stage</title><style>
+  :root { --ink:#1a2330; --muted:#5b6673; --line:#d9dde3; --bg:#fafaf8; --card:#ffffff;
+          --accent:#33586e; --ok:#2e6e4e; --bad:#a33d2e; --nr:#8a6d1f; }
+  body { font: 15px/1.55 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+         color: var(--ink); background: var(--bg); margin: 0; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; font-weight: 600; margin: 36px 0 10px; color: var(--accent);
+       text-transform: lowercase; letter-spacing: .02em; }
+  .meta { color: var(--muted); font-size: .85rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; background: var(--card); }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+  .chip { display: inline-block; padding: 1px 9px; border-radius: 10px; font-size: .8rem;
+          color: #fff; white-space: nowrap; }
+  .chip.ok { background: var(--ok); } .chip.bad { background: var(--bad); } .chip.nr { background: var(--nr); }
+  .decision { border-left: 4px solid var(--accent); background: var(--card);
+              padding: 14px 18px; margin-top: 8px; }
+  .decision.abstain { border-color: var(--bad); } .decision.proceed { border-color: var(--ok); }
+  .decision.conditional { border-color: var(--nr); }
+  .status { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .85rem; }
+  .reading { color: var(--muted); font-size: .88rem; margin: 6px 0 0; }
+  .draft { background: var(--card); border: 1px dashed var(--line); padding: 12px 16px;
+           font-size: .9rem; color: var(--ink); }
+  </style></head><body><main>
+<h1>Structural audit</h1>
+<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage <U+00B7> unit: patient <U+00B7> coxph <U+00B7> engine assesslite 0.1.0 <U+00B7> core spec 0.1 <U+00B7> 2026-07-11T10:05:48+0300 <U+00B7>
+ data 2129 <U+00D7> 8, md5 5e8f3eacf7df</p>
+
+<h2>declared structure</h2>
+<table>
+<tr><th>cluster</th><td>hospital</td></tr>
+<tr><th>time</th><td>diagnosis_year</td></tr>
+<tr><th>subgroups</th><td>stage</td></tr>
+<tr><th>covariates</th><td>age, sex, stage</td></tr>
+</table>
+
+<h2>invariance ledger</h2>
+<table><tr><th>claim</th><th>rationale</th><th>licenses</th><th>verdict</th></tr><tr><td><strong>unit permutation within cluster</strong><br><span class='meta'>assumed</span></td><td>patient ordering within a hospital carries no causal information</td><td>pooling patients within hospital into one likelihood</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>cluster exchangeability</strong><br><span class='meta'>assumed</span></td><td>hospitals follow the same national guideline; assumed provisionally so it can be attacked</td><td>one pooled effect across hospitals; transport to a hospital outside the sample</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>temporal translation</strong><br><span class='meta'>assumed</span></td><td>no major guideline revision inside the 2016-2025 window</td><td>pooling all diagnosis years; applying the estimate forward</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>subgroup transport</strong><br><span class='meta'>assumed</span></td><td>adherence is expected to act through the same pathways at every stage</td><td>one pooled effect rather than stage-specific effects</td><td><span class="chip nr">not resolvable at this n</span></td></tr></table>
+
+<h2>full-sample estimate</h2>
+<table><tr><th>scale</th><th>estimate</th><th>95% interval</th><th>n</th></tr>
+<tr><td>log hazard ratio</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr></table>
+
+<h2>attack: unit permutation <span class="chip ok">stable</span></h2>
+             <p class='meta'>probes: unit permutation within cluster</p>
+             <table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>permutation 1</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr>
+<tr><td>permutation 2</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr>
+<tr><td>permutation 3</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr>
+<tr><td>permutation 4</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr>
+<tr><td>permutation 5</td><td>-0.245</td><td>[-0.370, -0.119]</td><td>2129</td></tr></table>
+             <p class='reading'>estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically</p>
+<h2>attack: cluster holdout <span class="chip ok">stable</span></h2>
+             <p class='meta'>probes: cluster exchangeability</p>
+             <table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>without hospital = H01</td><td>-0.257</td><td>[-0.387, -0.128]</td><td>1983</td></tr>
+<tr><td>without hospital = H02</td><td>-0.238</td><td>[-0.369, -0.107]</td><td>1901</td></tr>
+<tr><td>without hospital = H03</td><td>-0.267</td><td>[-0.397, -0.138]</td><td>2005</td></tr>
+<tr><td>without hospital = H04</td><td>-0.239</td><td>[-0.370, -0.108]</td><td>1918</td></tr>
+<tr><td>without hospital = H05</td><td>-0.216</td><td>[-0.348, -0.085]</td><td>1906</td></tr>
+<tr><td>without hospital = H06</td><td>-0.273</td><td>[-0.402, -0.143]</td><td>2007</td></tr>
+<tr><td>without hospital = H07</td><td>-0.235</td><td>[-0.366, -0.104]</td><td>1952</td></tr>
+<tr><td>without hospital = H08</td><td>-0.247</td><td>[-0.378, -0.117]</td><td>1968</td></tr>
+<tr><td>without hospital = H09</td><td>-0.229</td><td>[-0.360, -0.099]</td><td>1986</td></tr>
+<tr><td>without hospital = H10</td><td>-0.246</td><td>[-0.376, -0.116]</td><td>1967</td></tr>
+<tr><td>without hospital = H11</td><td>-0.224</td><td>[-0.356, -0.093]</td><td>1952</td></tr>
+<tr><td>without hospital = H12</td><td>-0.261</td><td>[-0.396, -0.127]</td><td>1874</td></tr></table>
+             <p class='reading'>the largest variant shift was 1.6 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.13, so the claim of cluster exchangeability holds up under this test</p>
+<h2>attack: temporal split <span class="chip ok">stable</span></h2>
+             <p class='meta'>probes: temporal translation</p>
+             <table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>diagnosis_year early (2016-2020)</td><td>-0.212</td><td>[-0.388, -0.035]</td><td>1078</td></tr>
+<tr><td>diagnosis_year late (2021-2025)</td><td>-0.268</td><td>[-0.447, -0.090]</td><td>1051</td></tr></table>
+             <p class='reading'>the largest variant shift was 0.5 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.18, so the claim of temporal translation holds up under this test</p>
+<h2>attack: subgroup stability <span class="chip nr">not resolvable at this n</span></h2>
+             <p class='meta'>probes: subgroup transport</p>
+             <table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>stage = I</td><td>0.028</td><td>[-0.435, 0.490]</td><td>427</td></tr>
+<tr><td>stage = II</td><td>-0.040</td><td>[-0.376, 0.297]</td><td>448</td></tr>
+<tr><td>stage = III</td><td>-0.427</td><td>[-0.647, -0.207]</td><td>629</td></tr>
+<tr><td>stage = IV</td><td>-0.230</td><td>[-0.417, -0.043]</td><td>625</td></tr></table>
+             <p class='reading'>variant intervals are too wide to distinguish stability from instability: the smallest detectable shift (about 0.28) exceeds both the estimate (0.24) and twice its standard error; this attack is not resolvable at this n</p>
+
+<h2>decision</h2>
+<div class='decision conditional'><span class='status'>CONDITIONAL</span>
+<p>the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; cluster exchangeability; temporal translation</p><p><strong>Exposed surface</strong> (relied on, not settled): subgroup transport</p></div>
+
+<h2>limitations text (draft)</h2>
+<div class='draft'>The following invariance assumptions were relied on but could not be assessed, or were not resolvable at this sample size: subgroup transport. Conclusions are conditional on these claims holding. Stability verdicts assess whether the conclusion survived the attacks that were run; they do not establish the truth of the assumptions. [Draft for the analyst to edit; generated by assesslite, core spec 0.1.]</div>
+</main></body></html>

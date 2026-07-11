@@ -1,0 +1,26 @@
+Package: assesslite
+Title: AssessLite: Test What Your Analysis Depends On
+Version: 0.1.0
+Authors@R: person("Heidi", "Andersén", email = "andersenheidihelena@gmail.com",
+                  role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5923-5865"))
+Description: Structural assumption assessment for causal analysis. Makes the
+    invariance assumptions behind a result explicit, attacks them with
+    transformation tests (unit permutation, cluster holdout, temporal split,
+    subgroup stability), returns three-way verdicts (stable, unstable, not
+    resolvable), and exports the reasoning path as a durable audit record.
+    AssessLite is the product, structural_audit() runs the assessment, and
+    write_audit() writes the audit record. Sibling to 'recoverlite':
+    recoverlite asks whether a method can recover the quantity it estimates;
+    AssessLite asks what a result depends on and whether it survives the
+    violation of those assumptions. R implementation of the AssessLite core
+    specification v0.1. Records claim-to-source support, never truth: a stable
+    verdict means the conclusion survived the attacks that were run, at the
+    precision the data allowed.
+License: Apache License (>= 2)
+URL: https://github.com/heidihelena/assesslite
+BugReports: https://github.com/heidihelena/assesslite/issues
+Encoding: UTF-8
+Depends: R (>= 4.1)
+Imports: jsonlite, stats, utils, tools
+Suggests: survival, testthat (>= 3.0.0)
+RoxygenNote: 7.3.2

@@ -1,0 +1,130 @@
+# Constructor and estimator for a structural audit.
+# Implements core spec v0.1 (see spec/ in the assesslite repository).
+
+SPEC_VERSION <- "0.1"
+
+#' Canonical invariance identifiers (core spec v0.1)
+invariance_vocabulary <- function() {
+  c("unit_permutation",
+    "unit_permutation_within_cluster",
+    "cluster_exchangeability",
+    "temporal_translation",
+    "subgroup_transport",
+    "spatial_translation",
+    "network_relabelling")
+}
+
+#' Declare the structure of a causal analysis and open its audit
+#'
+#' @param data data frame of the analysis sample.
+#' @param outcome a single column name for a GLM outcome, or c(time, status)
+#'   column names for a Cox model (requires the survival package).
+#' @param exposure column name of the exposure of interest.
+#' @param covariates character vector of adjustment covariate names.
+#' @param cluster column name of the cluster variable (hospital, site), or NULL.
+#' @param time column name of the calendar-time variable, or NULL.
+#' @param subgroups character vector of subgroup variable names.
+#' @param unit what one row is (e.g. "patient").
+#' @param estimand plain-language statement of the target quantity.
+structural_audit <- function(data, outcome, exposure, covariates = character(),
+                             cluster = NULL, time = NULL, subgroups = character(),
+                             unit = "unit", estimand = NULL) {
+  stopifnot(is.data.frame(data))
+  needed <- c(outcome, exposure, covariates, cluster, time, subgroups)
+  missing_cols <- setdiff(needed, names(data))
+  if (length(missing_cols) > 0)
+    stop("columns not in data: ", paste(missing_cols, collapse = ", "))
+
+  if (length(outcome) == 2) {
+    if (!requireNamespace("survival", quietly = TRUE))
+      stop("a two-column outcome (time, status) needs the survival package")
+    estimator <- "coxph"
+    scale <- "log hazard ratio"
+  } else if (length(outcome) == 1) {
+    y <- data[[outcome]]
+    if (is.numeric(y) && all(y %in% c(0, 1, NA))) {
+      estimator <- "glm_binomial"; scale <- "log odds ratio"
+    } else if (is.numeric(y)) {
+      estimator <- "glm_gaussian"; scale <- "linear coefficient"
+    } else stop("outcome must be numeric (binary 0/1 or continuous), or c(time, status)")
+  } else stop("outcome must be one column name or c(time, status)")
+
+  if (is.null(estimand))
+    estimand <- paste0("effect of ", exposure, " on ", paste(outcome, collapse = "/"),
+                       " (", scale, ")")
+
+  audit <- structure(list(
+    data = data,
+    analysis = list(unit = unit, outcome = paste(outcome, collapse = "/"),
+                    outcome_cols = outcome, exposure = exposure,
+                    covariates = covariates, estimand = estimand,
+                    estimator = estimator, scale = scale),
+    structure = list(cluster = cluster, time = time, subgroups = subgroups),
+    ledger = list(),
+    tests = list(),
+    estimate = NULL,
+    decision = NULL
+  ), class = "structural_audit")
+
+  audit$estimate <- fit_estimate(audit, data)
+  if (is.null(audit$estimate))
+    stop("the full-sample model could not be fitted; audit not opened")
+  audit
+}
+
+# Fit the declared estimator on a data subset; return the exposure coefficient
+# on its natural scale, or NULL if the fit fails.
+fit_estimate <- function(audit, data) {
+  a <- audit$analysis
+  rhs <- paste(c(a$exposure, a$covariates), collapse = " + ")
+  fit <- tryCatch({
+    if (a$estimator == "coxph") {
+      f <- stats::as.formula(paste0("survival::Surv(", a$outcome_cols[1], ", ",
+                                    a$outcome_cols[2], ") ~ ", rhs))
+      survival::coxph(f, data = data)
+    } else {
+      f <- stats::as.formula(paste0(a$outcome_cols[1], " ~ ", rhs))
+      fam <- if (a$estimator == "glm_binomial") stats::binomial() else stats::gaussian()
+      stats::glm(f, data = data, family = fam)
+    }
+  }, error = function(e) NULL, warning = function(w) invokeRestart("muffleWarning"))
+  if (is.null(fit)) return(NULL)
+
+  cf <- stats::coef(fit)
+  idx <- which(startsWith(names(cf), a$exposure))
+  if (length(idx) == 0) return(NULL)
+  idx <- idx[1]
+  se <- sqrt(diag(stats::vcov(fit)))[idx]
+  est <- unname(cf[idx])
+  if (!is.finite(est) || !is.finite(se)) return(NULL)
+  n <- if (a$estimator == "coxph") fit$n else stats::nobs(fit)
+  list(value = est, se = unname(se),
+       ci_low = est - 1.96 * unname(se), ci_high = est + 1.96 * unname(se),
+       n = as.integer(n))
+}
+
+#' @export
+print.structural_audit <- function(x, ...) {
+  a <- x$analysis; e <- x$estimate
+  cat("structural audit (core spec ", SPEC_VERSION, ")\n", sep = "")
+  cat("  estimand : ", a$estimand, "\n", sep = "")
+  cat("  estimator: ", a$estimator, " on ", a$scale, "\n", sep = "")
+  cat(sprintf("  estimate : %.3f [%.3f, %.3f], n = %d\n",
+              e$value, e$ci_low, e$ci_high, e$n))
+  if (length(x$ledger) > 0) {
+    cat("  ledger   :\n")
+    for (l in x$ledger) {
+      v <- if (isTRUE(l$tested)) paste0(" -> ", gsub("_", " ", l$verdict)) else
+           if (l$status == "assumed") " (untested)" else ""
+      cat("    [", l$status, "] ", l$invariance, v, "\n", sep = "")
+    }
+  }
+  if (length(x$tests) > 0) {
+    cat("  attacks  :\n")
+    for (t in x$tests)
+      cat("    ", t$test, " -> ", gsub("_", " ", t$verdict), "\n", sep = "")
+  }
+  if (!is.null(x$decision))
+    cat("  decision : ", toupper(x$decision$status), " - ", x$decision$rationale, "\n", sep = "")
+  invisible(x)
+}

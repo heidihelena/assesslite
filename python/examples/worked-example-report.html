@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset='utf-8'>
+<title>structural audit — conditional hazard ratio for guideline adherence, adjusted for age, sex, stage</title><style>
+:root { --ink:#1a2330; --muted:#5b6673; --line:#d9dde3; --bg:#fafaf8; --card:#ffffff;
+        --accent:#33586e; --ok:#2e6e4e; --bad:#a33d2e; --nr:#8a6d1f; }
+body { font: 15px/1.55 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+       color: var(--ink); background: var(--bg); margin: 0; }
+main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; }
+h2 { font-size: 1.05rem; font-weight: 600; margin: 36px 0 10px; color: var(--accent);
+     text-transform: lowercase; letter-spacing: .02em; }
+.meta { color: var(--muted); font-size: .85rem; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; background: var(--card); }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+.chip { display: inline-block; padding: 1px 9px; border-radius: 10px; font-size: .8rem;
+        color: #fff; white-space: nowrap; }
+.chip.ok { background: var(--ok); } .chip.bad { background: var(--bad); } .chip.nr { background: var(--nr); }
+.decision { border-left: 4px solid var(--accent); background: var(--card);
+            padding: 14px 18px; margin-top: 8px; }
+.decision.abstain { border-color: var(--bad); } .decision.proceed { border-color: var(--ok); }
+.decision.conditional { border-color: var(--nr); }
+.status { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .85rem; }
+.reading { color: var(--muted); font-size: .88rem; margin: 6px 0 0; }
+.draft { background: var(--card); border: 1px dashed var(--line); padding: 12px 16px;
+         font-size: .9rem; color: var(--ink); }
+</style></head><body><main>
+<h1>Structural audit</h1>
+<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage · unit: patient · coxph ·
+ engine assesslite-python 0.1.0 · core spec 0.1 ·
+ 2026-07-11T10:01:12+0300 · data 2506 × 8,
+ md5 93ca8ff36545</p>
+
+<h2>declared structure</h2>
+<table>
+<tr><th>cluster</th><td>hospital</td></tr>
+<tr><th>time</th><td>diagnosis_year</td></tr>
+<tr><th>subgroups</th><td>stage</td></tr>
+<tr><th>covariates</th><td>age, sex, stage</td></tr>
+</table>
+
+<h2>invariance ledger</h2>
+<table><tr><th>claim</th><th>rationale</th><th>licenses</th><th>verdict</th></tr><tr><td><strong>unit permutation within cluster</strong><br><span class='meta'>assumed</span></td><td>patient ordering within a hospital carries no causal information</td><td>pooling patients within hospital into one likelihood</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>cluster exchangeability</strong><br><span class='meta'>assumed</span></td><td>hospitals follow the same national guideline; assumed provisionally so it can be attacked</td><td>one pooled effect across hospitals; transport to a hospital outside the sample</td><td><span class="chip bad">unstable</span></td></tr>
+<tr><td><strong>temporal translation</strong><br><span class='meta'>assumed</span></td><td>no major guideline revision inside the 2016-2025 window</td><td>pooling all diagnosis years; applying the estimate forward</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>subgroup transport</strong><br><span class='meta'>assumed</span></td><td>adherence is expected to act through the same pathways at every stage</td><td>one pooled effect rather than stage-specific effects</td><td><span class="chip ok">stable</span></td></tr></table>
+
+<h2>full-sample estimate</h2>
+<table><tr><th>scale</th><th>estimate</th><th>95% interval</th><th>n</th></tr>
+<tr><td>log hazard ratio</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr></table>
+
+<h2>attack: unit permutation <span class="chip ok">stable</span></h2><p class='meta'>probes: unit permutation within cluster</p><table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>permutation 1</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr>
+<tr><td>permutation 2</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr>
+<tr><td>permutation 3</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr>
+<tr><td>permutation 4</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr>
+<tr><td>permutation 5</td><td>-0.268</td><td>[-0.387, -0.150]</td><td>2506</td></tr></table><p class='reading'>estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically</p>
+<h2>attack: cluster holdout <span class="chip bad">unstable</span></h2><p class='meta'>probes: cluster exchangeability</p><table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>without hospital = H01</td><td>-0.294</td><td>[-0.418, -0.169]</td><td>2276</td></tr>
+<tr><td>without hospital = H02</td><td>-0.257</td><td>[-0.381, -0.134]</td><td>2303</td></tr>
+<tr><td>without hospital = H03</td><td>-0.254</td><td>[-0.377, -0.131]</td><td>2341</td></tr>
+<tr><td>without hospital = H04</td><td>-0.277</td><td>[-0.400, -0.153]</td><td>2307</td></tr>
+<tr><td>without hospital = H05</td><td>-0.260</td><td>[-0.383, -0.138]</td><td>2339</td></tr>
+<tr><td>without hospital = H06</td><td>-0.267</td><td>[-0.392, -0.142]</td><td>2290</td></tr>
+<tr><td>without hospital = H07</td><td>-0.250</td><td>[-0.374, -0.125]</td><td>2304</td></tr>
+<tr><td>without hospital = H08</td><td>-0.271</td><td>[-0.395, -0.147]</td><td>2316</td></tr>
+<tr><td>without hospital = H09</td><td>-0.230</td><td>[-0.353, -0.107]</td><td>2332</td></tr>
+<tr><td>without hospital = H10</td><td>-0.290</td><td>[-0.415, -0.166]</td><td>2255</td></tr>
+<tr><td>without hospital = H11</td><td>-0.294</td><td>[-0.420, -0.168]</td><td>2257</td></tr>
+<tr><td>without hospital = H12</td><td>-0.280</td><td>[-0.405, -0.154]</td><td>2246</td></tr></table><p class='reading'>the estimate moved by up to 2.3 standard errors of the difference; cluster exchangeability does not hold up under this attack, and the pooling or transport it licenses loses its basis</p>
+<h2>attack: temporal split <span class="chip ok">stable</span></h2><p class='meta'>probes: temporal translation</p><table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>diagnosis_year early (2016-2021)</td><td>-0.324</td><td>[-0.478, -0.170]</td><td>1506</td></tr>
+<tr><td>diagnosis_year late (2022-2025)</td><td>-0.185</td><td>[-0.372, 0.002]</td><td>1000</td></tr></table><p class='reading'>the largest variant shift was 1.1 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.17, so the claim of temporal translation holds up under this test</p>
+<h2>attack: subgroup stability <span class="chip ok">stable</span></h2><p class='meta'>probes: subgroup transport</p><table><tr><th>variant</th><th>estimate</th><th>95% interval</th><th>n</th></tr><tr><td>stage = I</td><td>-0.184</td><td>[-0.635, 0.268]</td><td>513</td></tr>
+<tr><td>stage = II</td><td>-0.297</td><td>[-0.607, 0.013]</td><td>505</td></tr>
+<tr><td>stage = III</td><td>-0.333</td><td>[-0.541, -0.125]</td><td>755</td></tr>
+<tr><td>stage = IV</td><td>-0.227</td><td>[-0.404, -0.051]</td><td>733</td></tr></table><p class='reading'>the largest variant shift was 0.7 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.26, so the claim of subgroup transport holds up under this test</p>
+
+<h2>decision</h2>
+<div class='decision abstain'><span class='status'>ABSTAIN</span>
+<p>the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; temporal translation; subgroup transport</p><p><strong>Broken by</strong>: cluster_holdout</p></div>
+
+<h2>limitations text (draft)</h2>
+<div class='draft'>The analysis abstains from a pooled conclusion: the cluster_holdout attack showed that a relied-on invariance does not hold up, and the pooling it licenses has no basis in this data. Stability verdicts assess whether the conclusion survived the attacks that were run; they do not establish the truth of the assumptions. [Draft for the analyst to edit; generated by assesslite-python, core spec 0.1.]</div>
+</main></body></html>

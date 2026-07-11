@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+*.Rproj
+*.tar.gz
+..Rcheck/
+
+# OS / editors
+.DS_Store
+*.swp

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assesslite.dev/schema/audit-v0.1.json",
+  "title": "Structural audit file (core spec v0.1)",
+  "type": "object",
+  "required": ["spec_version", "analysis", "structure", "ledger", "estimate", "tests", "decision", "provenance"],
+  "properties": {
+    "spec_version": { "const": "0.1" },
+    "analysis": {
+      "type": "object",
+      "required": ["unit", "outcome", "exposure", "estimand", "estimator", "scale"],
+      "properties": {
+        "unit": { "type": "string" },
+        "outcome": { "type": "string" },
+        "exposure": { "type": "string" },
+        "covariates": { "type": "array", "items": { "type": "string" } },
+        "estimand": { "type": "string" },
+        "estimator": { "type": "string" },
+        "scale": { "type": "string", "description": "natural scale of estimates, e.g. log hazard ratio" }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "cluster": { "type": ["string", "null"] },
+        "time": { "type": ["string", "null"] },
+        "subgroups": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ledger": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["invariance", "status", "rationale", "licenses"],
+        "properties": {
+          "invariance": { "type": "string" },
+          "status": { "enum": ["assumed", "rejected"] },
+          "rationale": { "type": "string" },
+          "licenses": { "type": "string" },
+          "tested": { "type": "boolean" },
+          "verdict": { "enum": ["stable", "unstable", "not_resolvable", null] }
+        }
+      }
+    },
+    "estimate": {
+      "type": "object",
+      "required": ["value", "se", "ci_low", "ci_high", "n"],
+      "properties": {
+        "value": { "type": "number" },
+        "se": { "type": "number" },
+        "ci_low": { "type": "number" },
+        "ci_high": { "type": "number" },
+        "n": { "type": "integer" }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test", "invariance", "verdict", "metrics", "variants", "reading"],
+        "properties": {
+          "test": { "type": "string" },
+          "invariance": { "type": "string" },
+          "verdict": { "enum": ["stable", "unstable", "not_resolvable"] },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "max_shift_z": { "type": ["number", "null"] },
+              "sign_flips_resolved": { "type": "integer" },
+              "sign_flips_unresolved": { "type": "integer" },
+              "mds": { "type": ["number", "null"] },
+              "null_crossings": { "type": "integer" }
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label", "estimate", "se", "ci_low", "ci_high", "n"],
+              "properties": {
+                "label": { "type": "string" },
+                "estimate": { "type": "number" },
+                "se": { "type": ["number", "null"] },
+                "ci_low": { "type": ["number", "null"] },
+                "ci_high": { "type": ["number", "null"] },
+                "n": { "type": "integer" }
+              }
+            }
+          },
+          "reading": { "type": "string" }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["status", "rationale", "load_bearing", "exposed_surface"],
+      "properties": {
+        "status": { "enum": ["proceed", "conditional", "abstain"] },
+        "rationale": { "type": "string" },
+        "load_bearing": {
+          "type": "array", "items": { "type": "string" },
+          "description": "assumed invariances that were attacked and came back stable"
+        },
+        "exposed_surface": {
+          "type": "array", "items": { "type": "string" },
+          "description": "assumed invariances untested or not resolvable"
+        },
+        "broken_by": { "type": ["string", "null"], "description": "test that produced the abstention, if any" },
+        "abstention_rules": { "type": "object" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["created", "engine", "engine_version", "spec_version", "data_fingerprint"],
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "engine": { "type": "string" },
+        "engine_version": { "type": "string" },
+        "platform": { "type": "string" },
+        "spec_version": { "type": "string" },
+        "data_fingerprint": {
+          "type": "object",
+          "properties": {
+            "n_rows": { "type": "integer" },
+            "n_cols": { "type": "integer" },
+            "md5": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

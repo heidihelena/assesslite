@@ -1,0 +1,7 @@
+^spec$
+^python$
+^ROADMAP\.md$
+^\.github$
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$

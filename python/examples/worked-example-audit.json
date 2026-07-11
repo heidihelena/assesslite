@@ -1,0 +1,341 @@
+{
+  "spec_version": "0.1",
+  "analysis": {
+    "unit": "patient",
+    "outcome": "time/status",
+    "exposure": "adherence",
+    "covariates": [
+      "age",
+      "sex",
+      "stage"
+    ],
+    "estimand": "conditional hazard ratio for guideline adherence, adjusted for age, sex, stage",
+    "estimator": "coxph",
+    "scale": "log hazard ratio"
+  },
+  "structure": {
+    "cluster": "hospital",
+    "time": "diagnosis_year",
+    "subgroups": [
+      "stage"
+    ]
+  },
+  "ledger": [
+    {
+      "invariance": "unit_permutation_within_cluster",
+      "status": "assumed",
+      "rationale": "patient ordering within a hospital carries no causal information",
+      "licenses": "pooling patients within hospital into one likelihood",
+      "tested": true,
+      "verdict": "stable"
+    },
+    {
+      "invariance": "cluster_exchangeability",
+      "status": "assumed",
+      "rationale": "hospitals follow the same national guideline; assumed provisionally so it can be attacked",
+      "licenses": "one pooled effect across hospitals; transport to a hospital outside the sample",
+      "tested": true,
+      "verdict": "unstable"
+    },
+    {
+      "invariance": "temporal_translation",
+      "status": "assumed",
+      "rationale": "no major guideline revision inside the 2016-2025 window",
+      "licenses": "pooling all diagnosis years; applying the estimate forward",
+      "tested": true,
+      "verdict": "stable"
+    },
+    {
+      "invariance": "subgroup_transport",
+      "status": "assumed",
+      "rationale": "adherence is expected to act through the same pathways at every stage",
+      "licenses": "one pooled effect rather than stage-specific effects",
+      "tested": true,
+      "verdict": "stable"
+    }
+  ],
+  "estimate": {
+    "value": -0.2684150229723372,
+    "se": 0.06064401377331795,
+    "ci_low": -0.3872772899680404,
+    "ci_high": -0.14955275597663403,
+    "n": 2506
+  },
+  "tests": [
+    {
+      "test": "unit_permutation",
+      "invariance": "unit_permutation_within_cluster",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 0.0,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": null,
+        "null_crossings": 0
+      },
+      "variants": [
+        {
+          "label": "permutation 1",
+          "estimate": -0.2684150229723372,
+          "se": 0.06064401377331795,
+          "ci_low": -0.3872772899680404,
+          "ci_high": -0.14955275597663403,
+          "n": 2506
+        },
+        {
+          "label": "permutation 2",
+          "estimate": -0.2684150229723372,
+          "se": 0.06064401377331795,
+          "ci_low": -0.3872772899680404,
+          "ci_high": -0.14955275597663403,
+          "n": 2506
+        },
+        {
+          "label": "permutation 3",
+          "estimate": -0.2684150229723372,
+          "se": 0.06064401377331795,
+          "ci_low": -0.3872772899680404,
+          "ci_high": -0.14955275597663403,
+          "n": 2506
+        },
+        {
+          "label": "permutation 4",
+          "estimate": -0.2684150229723372,
+          "se": 0.06064401377331795,
+          "ci_low": -0.3872772899680404,
+          "ci_high": -0.14955275597663403,
+          "n": 2506
+        },
+        {
+          "label": "permutation 5",
+          "estimate": -0.2684150229723372,
+          "se": 0.06064401377331795,
+          "ci_low": -0.3872772899680404,
+          "ci_high": -0.14955275597663403,
+          "n": 2506
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically"
+    },
+    {
+      "test": "cluster_holdout",
+      "invariance": "cluster_exchangeability",
+      "verdict": "unstable",
+      "metrics": {
+        "max_shift_z": 2.2739765786857196,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.1241789071536595,
+        "null_crossings": 0
+      },
+      "variants": [
+        {
+          "label": "without hospital = H01",
+          "estimate": -0.2939233756463723,
+          "se": 0.06351306812798876,
+          "ci_low": -0.41840898917723024,
+          "ci_high": -0.1694377621155143,
+          "n": 2276
+        },
+        {
+          "label": "without hospital = H02",
+          "estimate": -0.25720308723776864,
+          "se": 0.06300126671463238,
+          "ci_low": -0.3806855699984481,
+          "ci_high": -0.13372060447708917,
+          "n": 2303
+        },
+        {
+          "label": "without hospital = H03",
+          "estimate": -0.2543307028871771,
+          "se": 0.06280441949783111,
+          "ci_low": -0.37742736510292607,
+          "ci_high": -0.1312340406714281,
+          "n": 2341
+        },
+        {
+          "label": "without hospital = H04",
+          "estimate": -0.27691915630587655,
+          "se": 0.06301890635289985,
+          "ci_low": -0.40043621275756025,
+          "ci_high": -0.15340209985419284,
+          "n": 2307
+        },
+        {
+          "label": "without hospital = H05",
+          "estimate": -0.26038501288021865,
+          "se": 0.06263835932799668,
+          "ci_low": -0.3831561971630921,
+          "ci_high": -0.13761382859734517,
+          "n": 2339
+        },
+        {
+          "label": "without hospital = H06",
+          "estimate": -0.26690085287183685,
+          "se": 0.0637154860680941,
+          "ci_low": -0.3917832055653013,
+          "ci_high": -0.14201850017837242,
+          "n": 2290
+        },
+        {
+          "label": "without hospital = H07",
+          "estimate": -0.24968260333317213,
+          "se": 0.06349659632253975,
+          "ci_low": -0.37413593212535,
+          "ci_high": -0.12522927454099422,
+          "n": 2304
+        },
+        {
+          "label": "without hospital = H08",
+          "estimate": -0.2706216757022927,
+          "se": 0.06321657424241893,
+          "ci_low": -0.3945261612174338,
+          "ci_high": -0.14671719018715157,
+          "n": 2316
+        },
+        {
+          "label": "without hospital = H09",
+          "estimate": -0.23004217567371885,
+          "se": 0.06294803015065518,
+          "ci_low": -0.353420314769003,
+          "ci_high": -0.10666403657843469,
+          "n": 2332
+        },
+        {
+          "label": "without hospital = H10",
+          "estimate": -0.290180455099586,
+          "se": 0.06359872057769218,
+          "ci_low": -0.4148339474318627,
+          "ci_high": -0.16552696276730933,
+          "n": 2255
+        },
+        {
+          "label": "without hospital = H11",
+          "estimate": -0.293602175785386,
+          "se": 0.06423455622979249,
+          "ci_low": -0.4195019059957793,
+          "ci_high": -0.16770244557499273,
+          "n": 2257
+        },
+        {
+          "label": "without hospital = H12",
+          "estimate": -0.2797540194194177,
+          "se": 0.06407151293703808,
+          "ci_low": -0.40533418477601235,
+          "ci_high": -0.15417385406282305,
+          "n": 2246
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "the estimate moved by up to 2.3 standard errors of the difference; cluster exchangeability does not hold up under this attack, and the pooling or transport it licenses loses its basis"
+    },
+    {
+      "test": "temporal_split",
+      "invariance": "temporal_translation",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 1.1278506545554845,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.17062907898276758,
+        "null_crossings": 1
+      },
+      "variants": [
+        {
+          "label": "diagnosis_year early (2016-2021)",
+          "estimate": -0.3240027033635186,
+          "se": 0.07857511158296546,
+          "ci_low": -0.4780099220661309,
+          "ci_high": -0.1699954846609063,
+          "n": 1506
+        },
+        {
+          "label": "diagnosis_year late (2022-2025)",
+          "estimate": -0.1851565111845125,
+          "se": 0.09553619350149127,
+          "ci_low": -0.3724074504474354,
+          "ci_high": 0.002094428078410371,
+          "n": 1000
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "the largest variant shift was 1.1 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.17, so the claim of temporal translation holds up under this test"
+    },
+    {
+      "test": "subgroup_stability",
+      "invariance": "subgroup_transport",
+      "verdict": "stable",
+      "metrics": {
+        "max_shift_z": 0.7440824759586337,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.25906165680893745,
+        "null_crossings": 2
+      },
+      "variants": [
+        {
+          "label": "stage = I",
+          "estimate": -0.18396261900099412,
+          "se": 0.23035848319981725,
+          "ci_low": -0.6354652460726359,
+          "ci_high": 0.2675400080706477,
+          "n": 513
+        },
+        {
+          "label": "stage = II",
+          "estimate": -0.2966938524449913,
+          "se": 0.1582093643322996,
+          "ci_low": -0.6067842065362985,
+          "ci_high": 0.013396501646315895,
+          "n": 505
+        },
+        {
+          "label": "stage = III",
+          "estimate": -0.3332307451543519,
+          "se": 0.10613926506457533,
+          "ci_low": -0.5412637046809196,
+          "ci_high": -0.12519778562778427,
+          "n": 755
+        },
+        {
+          "label": "stage = IV",
+          "estimate": -0.2273000589682503,
+          "se": 0.08990076662124172,
+          "ci_low": -0.4035055615458841,
+          "ci_high": -0.05109455639061655,
+          "n": 733
+        }
+      ],
+      "n_failed_refits": 0,
+      "reading": "the largest variant shift was 0.7 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.26, so the claim of subgroup transport holds up under this test"
+    }
+  ],
+  "decision": {
+    "status": "abstain",
+    "rationale": "the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported",
+    "load_bearing": [
+      "unit_permutation_within_cluster",
+      "temporal_translation",
+      "subgroup_transport"
+    ],
+    "exposed_surface": [],
+    "broken_by": "cluster_holdout",
+    "abstention_rules": {
+      "estimate_sign_changes": true,
+      "effect_crosses_threshold": null
+    }
+  },
+  "provenance": {
+    "created": "2026-07-11T10:01:12+0300",
+    "engine": "assesslite-python",
+    "engine_version": "0.1.0",
+    "platform": "Python 3.11.8",
+    "spec_version": "0.1",
+    "data_fingerprint": {
+      "n_rows": 2506,
+      "n_cols": 8,
+      "md5": "93ca8ff36545603764ae1e6e35b57e82"
+    }
+  }
+}
