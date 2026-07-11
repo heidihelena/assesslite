@@ -16,6 +16,7 @@ from . import graph as _graph
 from . import lattice as _lattice
 from . import report as _report
 from . import sensitivity as _sens
+from . import spatial as _spatial
 from . import transformations as _tf
 from .estimator import detect_estimator, fit_estimate
 
@@ -33,7 +34,8 @@ INVARIANCE_VOCABULARY = (
 )
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
-_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check")
+_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check",
+                                 "spatial_holdout")
 
 
 def invariance_vocabulary() -> tuple:
@@ -57,18 +59,25 @@ class StructuralAudit:
 
     def __init__(self, data: pd.DataFrame, outcome, exposure: str,
                  covariates=None, cluster: str | None = None, time: str | None = None,
-                 subgroups=None, unit: str = "unit", estimand: str | None = None):
+                 subgroups=None, coords=None, unit: str = "unit", estimand: str | None = None):
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas DataFrame")
         covariates = list(covariates or [])
         subgroups = list(subgroups or [])
+        if coords is not None:
+            coords = list(coords)
+            if len(coords) != 2:
+                raise ValueError("coords must be two column names, (x, y) or (lon, lat)")
         outcome_cols = list(outcome) if isinstance(outcome, (list, tuple)) else [outcome]
 
         needed = outcome_cols + [exposure] + covariates + \
-            ([cluster] if cluster else []) + ([time] if time else []) + subgroups
+            ([cluster] if cluster else []) + ([time] if time else []) + subgroups + \
+            (list(coords) if coords else [])
         missing = [c for c in needed if c not in data.columns]
         if missing:
             raise ValueError("columns not in data: " + ", ".join(missing))
+        if coords is not None and not all(pd.api.types.is_numeric_dtype(data[c]) for c in coords):
+            raise ValueError("coords columns must be numeric")
 
         estimator, scale = detect_estimator(data, outcome)
         if estimand is None:
@@ -80,7 +89,8 @@ class StructuralAudit:
             "exposure": exposure, "covariates": covariates, "estimand": estimand,
             "estimator": estimator, "scale": scale,
         }
-        self.structure = {"cluster": cluster, "time": time, "subgroups": subgroups}
+        self.structure = {"cluster": cluster, "time": time, "subgroups": subgroups,
+                          "coords": coords}
         self.ledger: list[dict] = []
         self.tests: dict[str, dict] = {}
         self.decision: dict | None = None
@@ -152,7 +162,7 @@ class StructuralAudit:
 
     # --- attacks --------------------------------------------------------------
     def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25,
-             outcome_node=None):
+             outcome_node=None, spatial_k: int = 3):
         """Run attacks against the declared invariances.
 
         tests may include confounding_sensitivity (E-value) and graph_check /
@@ -172,6 +182,7 @@ class StructuralAudit:
             "confounding_sensitivity": lambda: _sens.test_confounding_sensitivity(self, confounding_benchmark),
             "graph_check": lambda: _graph.test_graph_check(self),
             "adjustment_check": lambda: _graph.test_adjustment_check(self, outcome_node),
+            "spatial_holdout": lambda: _spatial.test_spatial_holdout(self, spatial_k),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

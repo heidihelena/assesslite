@@ -138,6 +138,35 @@ def simulate_survival(n=1200, effect=-0.7, seed=4):
                          "x": x, "age": age})
 
 
+def test_spatial_holdout_flags_regional_heterogeneity():
+    rng = np.random.default_rng(2); n = 3000
+    lon = rng.uniform(0, 10, n); lat = rng.uniform(0, 10, n); x = rng.binomial(1, 0.5, n)
+    eff = np.where(lon < 5, -1.8, 0.0)
+    y = rng.binomial(1, 1/(1+np.exp(-(0.2 + eff*x))))
+    d = pd.DataFrame({"y": y, "x": x, "lon": lon, "lat": lat})
+    a = StructuralAudit(d, outcome="y", exposure="x", coords=("lon", "lat"))
+    a.assume("spatial_translation", "homog", "pool").test(["spatial_holdout"], spatial_k=2)
+    assert a.tests["spatial_holdout"]["verdict"] == "unstable"
+    assert a.tests["spatial_holdout"]["variants"].shape[0] == 4
+
+    y2 = rng.binomial(1, 1/(1+np.exp(-(-0.6*x))), n)
+    d2 = pd.DataFrame({"y": y2, "x": x, "lon": lon, "lat": lat})
+    a2 = StructuralAudit(d2, outcome="y", exposure="x", coords=("lon", "lat"))
+    a2.assume("spatial_translation", "h", "p").test(["spatial_holdout"], spatial_k=3)
+    assert a2.tests["spatial_holdout"]["verdict"] == "stable"
+
+
+def test_coords_validation_and_spatial_needs_them():
+    d = pd.DataFrame({"y": np.random.default_rng(0).binomial(1, .5, 50),
+                      "x": np.random.default_rng(1).binomial(1, .5, 50),
+                      "lon": np.random.default_rng(2).uniform(size=50)})
+    with pytest.raises(ValueError, match="two column"):
+        StructuralAudit(d, outcome="y", exposure="x", coords=("lon",))
+    a = StructuralAudit(d, outcome="y", exposure="x")
+    with pytest.raises(ValueError, match="declared coordinates"):
+        a.test(["spatial_holdout"])
+
+
 def test_evalue_matches_published_and_confounding_sensitivity_runs():
     from assesslite.sensitivity import evalue_from_ratio
     assert round(evalue_from_ratio(3.9), 2) == 7.26

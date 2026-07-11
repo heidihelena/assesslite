@@ -61,6 +61,8 @@ def audit_as_list(assessment) -> dict:
             "cluster": assessment.structure["cluster"],
             "time": assessment.structure["time"],
             "subgroups": list(assessment.structure["subgroups"]),
+            "coords": (list(assessment.structure["coords"])
+                       if assessment.structure.get("coords") else None),
         },
         "ledger": [
             {"invariance": l["invariance"], "status": l["status"], "rationale": l["rationale"],

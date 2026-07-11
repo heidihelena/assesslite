@@ -8,11 +8,18 @@ stability_metrics <- function(est0, se0, ci0_low, ci0_high, variants) {
   se_diff <- ifelse(!is.na(variants$se) & variants$se > se0,
                     sqrt(variants$se^2 - se0^2), se0)
   shift_z <- abs(variants$estimate - est0) / se_diff
+  # two-sided p per variant, Bonferroni-adjusted for the number of variants so that
+  # many blocks/clusters do not inflate the false-positive rate (a max-shift threshold
+  # with m variants flags ~m x too often under stability)
+  m_var <- nrow(variants)
+  p_j <- 2 * stats::pnorm(-shift_z)
+  shift_p_bonf <- if (m_var > 0) min(1, m_var * min(p_j, na.rm = TRUE)) else NA_real_
   flip <- sign(variants$estimate) != sign(est0) & sign(est0) != 0
   excl_null <- !is.na(variants$ci_low) & (variants$ci_low > 0 | variants$ci_high < 0)
   full_excl_null <- (ci0_low > 0 | ci0_high < 0)
   list(
     max_shift_z = max(shift_z, na.rm = TRUE),
+    shift_p_bonf = shift_p_bonf,
     sign_flips_resolved = sum(flip & excl_null, na.rm = TRUE),
     sign_flips_unresolved = sum(flip & !excl_null, na.rm = TRUE),
     mds = 1.96 * stats::median(variants$se, na.rm = TRUE),
@@ -21,7 +28,8 @@ stability_metrics <- function(est0, se0, ci0_low, ci0_high, variants) {
 }
 
 verdict_from_metrics <- function(m, est0, se0) {
-  if (m$sign_flips_resolved >= 1 || m$max_shift_z > 2) return("unstable")
+  if (m$sign_flips_resolved >= 1 || (is.finite(m$shift_p_bonf) && m$shift_p_bonf < 0.05))
+    return("unstable")
   if (is.finite(m$mds) && m$mds > max(2 * se0, abs(est0))) return("not_resolvable")
   "stable"
 }

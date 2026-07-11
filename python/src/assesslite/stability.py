@@ -4,6 +4,8 @@ audit file can be re-read back to its verdicts. Kept identical to the R engine.
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -19,6 +21,11 @@ def stability_metrics(est0: float, se0: float, ci0_low: float, ci0_high: float,
     # pooled estimate contains (see spec/stability/metrics.md)
     se_diff = np.where((~np.isnan(se)) & (se > se0), np.sqrt(np.clip(se ** 2 - se0 ** 2, 0, None)), se0)
     shift_z = np.abs(est - est0) / se_diff
+    # two-sided p per variant, Bonferroni-adjusted for the number of variants so that
+    # many blocks/clusters do not inflate the false-positive rate
+    m_var = len(shift_z)
+    p_j = np.array([math.erfc(z / math.sqrt(2)) if np.isfinite(z) else np.nan for z in shift_z])
+    shift_p_bonf = float(min(1.0, m_var * np.nanmin(p_j))) if m_var > 0 else float("nan")
 
     flip = (np.sign(est) != np.sign(est0)) & (np.sign(est0) != 0)
     excl_null = (~np.isnan(lo)) & ((lo > 0) | (hi < 0))
@@ -26,6 +33,7 @@ def stability_metrics(est0: float, se0: float, ci0_low: float, ci0_high: float,
 
     return {
         "max_shift_z": float(np.nanmax(shift_z)),
+        "shift_p_bonf": shift_p_bonf,
         "sign_flips_resolved": int(np.nansum(flip & excl_null)),
         "sign_flips_unresolved": int(np.nansum(flip & ~excl_null)),
         "mds": float(1.96 * np.nanmedian(se)),
@@ -34,7 +42,8 @@ def stability_metrics(est0: float, se0: float, ci0_low: float, ci0_high: float,
 
 
 def verdict_from_metrics(m: dict, est0: float, se0: float) -> str:
-    if m["sign_flips_resolved"] >= 1 or m["max_shift_z"] > 2:
+    if m["sign_flips_resolved"] >= 1 or (np.isfinite(m.get("shift_p_bonf", np.nan))
+                                         and m["shift_p_bonf"] < 0.05):
         return "unstable"
     if np.isfinite(m["mds"]) and m["mds"] > max(2 * se0, abs(est0)):
         return "not_resolvable"
