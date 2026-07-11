@@ -109,14 +109,24 @@ class StructuralAudit:
                             "licenses": licenses, "tested": False, "verdict": None})
         return self
 
-    def declare_graph(self, edges):
-        """Declare a causal DAG (edges like 'age -> adherence') for the graph_check attack."""
+    def declare_graph(self, edges, latent=()):
+        """Declare a causal DAG (edges like 'age -> adherence') for the graph checks.
+
+        latent names nodes that are part of the causal structure but not measured
+        (e.g. an unmeasured confounder); they may not enter an adjustment set, and
+        implications that touch them are not testable.
+        """
         g = _graph.parse_graph(edges)
-        missing = [v for v in g["nodes"] if v not in self.data.columns]
+        latent = list(latent)
+        bad = [v for v in latent if v not in g["nodes"]]
+        if bad:
+            raise ValueError("latent nodes not in the graph: " + ", ".join(bad))
+        g["latent"] = latent
+        missing = [v for v in g["nodes"] if v not in latent and v not in self.data.columns]
         if missing:
             import warnings
-            warnings.warn("graph nodes not found in the data (implications involving them will be "
-                          "skipped): " + ", ".join(missing))
+            warnings.warn("graph nodes not found in the data and not declared latent "
+                          "(implications involving them will be skipped): " + ", ".join(missing))
         self.graph = g
         return self
 

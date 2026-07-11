@@ -127,8 +127,9 @@ shared schema.
 - `adjustment_check` — given the same declared DAG, does the covariate set you adjusted for
   satisfy the backdoor criterion? Flags open backdoor paths (under-adjustment) and adjusted
   descendants of the exposure (over-adjustment / mediator or collider bias), and reports a
-  minimal sufficient set. Self-contained d-separation engine, no `dagitty` dependency
-  (`spec/graph/adjustment.md`).
+  minimal sufficient set. Mark unmeasured confounders with `declare_graph(..., latent = ...)`
+  and it reports **non-identifiability** — "no measured adjustment can block this backdoor path"
+  (`spec/graph/adjustment.md`). Self-contained d-separation engine, no `dagitty` dependency.
 
 All fold into the same three-way verdicts and decision rules.
 

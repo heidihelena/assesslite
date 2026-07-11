@@ -126,6 +126,7 @@
               "missing": { "type": "array", "items": { "type": "string" } },
               "over_adjustment": { "type": "array", "items": { "type": "string" } },
               "valid": { "type": ["boolean", "null"] },
+              "identifiable": { "type": ["boolean", "null"] },
               "open_backdoor": { "type": ["boolean", "null"] }
             }
           },

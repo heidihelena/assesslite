@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 
 def _fingerprint(data: pd.DataFrame) -> dict:

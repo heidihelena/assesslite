@@ -193,6 +193,35 @@ test_that("adjustment_check flags under- and over-adjustment against the graph",
   expect_equal(run(c("C", "M"))$verdict, "unstable")
 })
 
+test_that("adjustment_check reports non-identifiability under a latent confounder", {
+  set.seed(1); n <- 1000
+  U <- rnorm(n); C <- rnorm(n)
+  X <- rbinom(n, 1, plogis(0.8 * U + 0.6 * C))
+  Y <- rbinom(n, 1, plogis(0.7 * U + 0.5 * C + 0.5 * X))
+  d <- data.frame(C = C, X = X, Y = Y)   # U is unmeasured
+  run <- function(covs, edges, latent = character()) {
+    a <- structural_audit(d, outcome = "Y", exposure = "X", covariates = covs)
+    a <- declare_graph(a, edges, latent = latent)
+    test_invariance(a, tests = "adjustment_check")$tests$adjustment_check
+  }
+  r1 <- run("C", c("U -> X", "U -> Y", "C -> X", "C -> Y", "X -> Y"), latent = "U")
+  expect_equal(r1$verdict, "not_resolvable")
+  expect_false(r1$adjustment$identifiable)
+  r2 <- run("C", c("C -> X", "C -> Y", "X -> Y"))
+  expect_equal(r2$verdict, "stable")
+  expect_true(r2$adjustment$identifiable)
+})
+
+test_that("declare_graph validates latent nodes and graph_check skips latent implications", {
+  d <- data.frame(C = rnorm(50), X = rbinom(50, 1, .5), Y = rbinom(50, 1, .5))
+  a <- structural_audit(d, outcome = "Y", exposure = "X")
+  expect_error(declare_graph(a, c("C -> X", "X -> Y"), latent = "Q"), "not in the graph")
+  a <- declare_graph(a, c("U -> X", "U -> Y", "X -> Y"), latent = "U")
+  gc <- test_invariance(a, tests = "graph_check")$tests$graph_check
+  statuses <- vapply(gc$implications, function(im) im$status, character(1))
+  expect_true(all(statuses[grepl("U", vapply(gc$implications, function(im) im$claim, character(1)))] == "not_testable"))
+})
+
 test_that("declare_graph rejects a cyclic graph and graph_check needs a declared graph", {
   d <- data.frame(a = rnorm(50), b = rnorm(50), y = rbinom(50, 1, 0.5))
   au <- structural_audit(d, outcome = "y", exposure = "a")
