@@ -47,6 +47,55 @@ def _chip(v: str) -> str:
     return f'<span class="chip {cls}">{lab}</span>'
 
 
+def _lattice_svg(L) -> str:
+    fill = {"consistent": "#2e6e4e", "attenuated": "#8a6d1f", "reversed": "#a33d2e"}
+    k = len(L["axes"])
+    nds = L["nodes"]
+    W, H, pad = 540, 60 + k * 90, 34
+    lev = [nd["n_pooled"] for nd in nds]
+    pos = []
+    for idx, nd in enumerate(nds):
+        row_idx = [i for i, lv in enumerate(lev) if lv == lev[idx]]
+        m = len(row_idx); i = row_idx.index(idx)
+        y = H - pad - lev[idx] * ((H - 2 * pad) / max(k, 1))
+        x = W / 2 if m == 1 else pad + i * (W - 2 * pad) / (m - 1)
+        pos.append({"x": x, "y": y, "pooled": sorted(nd["pooled"]),
+                    "status": nd["status"], "est": nd["estimate"]})
+    edges = ""
+    for a in pos:
+        for b in pos:
+            if len(b["pooled"]) == len(a["pooled"]) + 1 and all(p in b["pooled"] for p in a["pooled"]):
+                edges += (f"<line x1='{a['x']:.0f}' y1='{a['y']:.0f}' x2='{b['x']:.0f}' "
+                          f"y2='{b['y']:.0f}' stroke='#c7ccd3'/>")
+    circles = ""
+    for p in pos:
+        lab = "none" if not p["pooled"] else "+".join(w[:4] for w in p["pooled"])
+        circles += (f"<circle cx='{p['x']:.0f}' cy='{p['y']:.0f}' r='17' fill='{fill[p['status']]}'/>"
+                    f"<text x='{p['x']:.0f}' y='{p['y']+2:.0f}' text-anchor='middle' font-size='8' fill='#fff'>{_esc(lab)}</text>"
+                    f"<text x='{p['x']:.0f}' y='{p['y']+32:.0f}' text-anchor='middle' font-size='9' fill='#5b6673'>{_fmt(p['est'], 2)}</text>")
+    return f"<svg viewBox='0 0 {W} {H}' width='100%' style='max-width:540px'>{edges}{circles}</svg>"
+
+
+def _lattice_html(L, scale) -> str:
+    if not L or not L.get("nodes"):
+        return ""
+    chip_of = {"consistent": "ok", "attenuated": "nr", "reversed": "bad"}
+    rows = []
+    for nd in L["nodes"]:
+        pooled = ", ".join(x.replace("_", " ") for x in nd["pooled"]) if nd["pooled"] else "nothing"
+        rows.append(
+            f"<tr><td>pool: {_esc(pooled)}</td>"
+            f"<td>{_fmt(nd['estimate'])} [{_fmt(nd['ci_low'])}, {_fmt(nd['ci_high'])}]</td>"
+            f"<td>{nd['n']}</td>"
+            f"<td><span class='chip {chip_of[nd['status']]}'>{_esc(nd['status'])}</span></td></tr>")
+    axes = ", ".join(x.replace("_", " ") for x in L["axes"])
+    return (f"<h2>assumption lattice {_chip(L['verdict'])}</h2>"
+            f"<p class='meta'>pooling axes: {_esc(axes)} (each node pools some axes and stratifies the rest)</p>"
+            f"{_lattice_svg(L)}"
+            f"<table><tr><th>node</th><th>estimate ({_esc(scale)})</th><th>n</th><th>status</th></tr>"
+            f"{''.join(rows)}</table><p class='reading'>{_esc(L['reading'])}</p>")
+
+
 def _limitations(assessment) -> str:
     d = assessment.decision
     if d["status"] == "proceed":
@@ -169,6 +218,8 @@ def render_report(assessment, path: str) -> str:
               if d["load_bearing"] else "")
     broken = f"<p><strong>Broken by</strong>: {_esc(d['broken_by'])}</p>" if d["broken_by"] else ""
 
+    lattice_html = _lattice_html(assessment.lattice, a["scale"])
+
     html = f"""<!doctype html><html><head><meta charset='utf-8'>
 <title>structural audit — {_esc(a['estimand'])}</title><style>{_CSS}</style></head><body><main>
 <h1>Structural audit</h1>
@@ -197,6 +248,8 @@ def render_report(assessment, path: str) -> str:
 <h2>decision</h2>
 <div class='decision {d['status']}'><span class='status'>{d['status'].upper()}</span>
 <p>{_esc(d['rationale'])}</p>{load_b}{surface}{broken}</div>
+
+{lattice_html}
 
 <h2>limitations text (draft)</h2>
 <div class='draft'>{_esc(_limitations(assessment))}</div>

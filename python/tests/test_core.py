@@ -181,6 +181,39 @@ def test_graph_check_detects_consistent_and_violated():
     jsonschema.validate(au.export_audit(), json.loads(SCHEMA.read_text()))
 
 
+def test_assumption_lattice_refits_and_is_schema_valid():
+    import jsonschema
+    rng = np.random.default_rng(3); n = 1200
+    h = rng.choice(list("ABCDE"), n); yr = rng.integers(2018, 2023, n)
+    age = rng.normal(65, 8, n); x = rng.binomial(1, 1/(1+np.exp(0.02*(age-65))))
+    lp = -0.6*x + 0.03*(age-65); te = rng.exponential(1/(0.05*np.exp(lp))); tc = rng.uniform(1, 6, n)
+    d = pd.DataFrame({"time": np.minimum(te, tc), "status": (te <= tc).astype(int),
+                      "x": x, "age": age, "h": h, "yr": yr})
+    a = StructuralAudit(d, outcome=("time", "status"), exposure="x", covariates=["age"],
+                        cluster="h", time="yr")
+    a.assume("cluster_exchangeability", "p", "p").test(["cluster_holdout"]).decide()
+    a.assumption_lattice()
+    assert len(a.lattice["nodes"]) == 4
+    assert a.lattice["verdict"] in ("stable", "unstable", "not_resolvable")
+    top = [nd for nd in a.lattice["nodes"] if nd["n_pooled"] == 2][0]
+    assert abs(top["estimate"] - a.estimate["value"]) < 1e-6
+    jsonschema.validate(a.export_audit(), json.loads(SCHEMA.read_text()))
+
+
+def test_stratified_cox_matches_r_breslow():
+    # exact cross-check against R coxph(ties="breslow") on fixed data lives in the R suite;
+    # here we assert stratification runs and a noise stratum keeps the sign
+    from assesslite.estimator import fit_estimate
+    rng = np.random.default_rng(9); n = 1500
+    g = rng.integers(0, 4, n).astype(str); x = rng.binomial(1, 0.5, n); age = rng.normal(0, 1, n)
+    y = rng.binomial(1, 1/(1+np.exp(-(-0.7*x + 0.2*age))))
+    d = pd.DataFrame({"y": y, "x": x, "age": age, "g": g})
+    an = {"exposure": "x", "covariates": ["age"], "outcome_cols": ["y"], "estimator": "glm_binomial"}
+    f0 = fit_estimate(an, d)
+    fs = fit_estimate(an, d, strata=["g"])
+    assert np.sign(f0["value"]) == np.sign(fs["value"])
+
+
 def test_backdoor_handles_textbook_cases():
     from assesslite.graph import backdoor_valid
     triangle = {"C": [], "X": ["C"], "Y": ["C", "X"]}

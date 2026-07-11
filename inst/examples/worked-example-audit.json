@@ -417,7 +417,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T13:11:48+0300",
+    "created": "2026-07-11T13:58:48+0300",
     "engine": "assesslite",
     "engine_version": "0.2.0",
     "platform": "R version 4.4.2 (2024-10-31)",
@@ -427,5 +427,56 @@
       "n_cols": 8,
       "md5": "5e8f3eacf7df85453aa79f6aa0bf9c87"
     }
+  },
+  "lattice": {
+    "axes": ["cluster_exchangeability", "temporal_translation"],
+    "variables": {
+      "cluster_exchangeability": "hospital",
+      "temporal_translation": "diagnosis_year"
+    },
+    "nodes": [
+      {
+        "pooled": [],
+        "stratified": ["cluster_exchangeability", "temporal_translation"],
+        "n_pooled": 0,
+        "estimate": -0.2443082262,
+        "ci_low": -0.3703636148,
+        "ci_high": -0.11825283759,
+        "n": 2129,
+        "status": "consistent"
+      },
+      {
+        "pooled": ["cluster_exchangeability"],
+        "stratified": ["temporal_translation"],
+        "n_pooled": 1,
+        "estimate": -0.23560763825,
+        "ci_low": -0.36125348474,
+        "ci_high": -0.10996179176,
+        "n": 2129,
+        "status": "consistent"
+      },
+      {
+        "pooled": ["temporal_translation"],
+        "stratified": ["cluster_exchangeability"],
+        "n_pooled": 1,
+        "estimate": -0.25435670518,
+        "ci_low": -0.37985619005,
+        "ci_high": -0.1288572203,
+        "n": 2129,
+        "status": "consistent"
+      },
+      {
+        "pooled": ["cluster_exchangeability", "temporal_translation"],
+        "stratified": [],
+        "n_pooled": 2,
+        "estimate": -0.24465565913,
+        "ci_low": -0.3698146873,
+        "ci_high": -0.11949663096,
+        "n": 2129,
+        "status": "consistent"
+      }
+    ],
+    "verdict": "stable",
+    "reading": "the exposure estimate keeps the same direction and stays distinguishable from no effect under every pool-or-stratify choice over {cluster exchangeability, temporal translation}; the conclusion does not depend on these pooling commitments"
   }
 }

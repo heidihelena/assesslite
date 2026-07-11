@@ -76,21 +76,29 @@ structural_audit <- function(data, outcome, exposure, covariates = character(),
 }
 
 # Fit the declared estimator on a data subset; return the exposure coefficient
-# on its natural scale, or NULL if the fit fails.
-fit_estimate <- function(audit, data) {
+# on its natural scale, or NULL if the fit fails. `strata` names variables to
+# condition on without pooling: Cox strata() (separate baseline hazards), or
+# GLM fixed-effect factors. Used by the assumption lattice to refit under weaker
+# pooling commitments.
+fit_estimate <- function(audit, data, strata = character()) {
   a <- audit$analysis
+  strata <- setdiff(strata, c(a$exposure, a$covariates))
   rhs <- paste(c(a$exposure, a$covariates), collapse = " + ")
-  fit <- tryCatch({
+  fit <- tryCatch(suppressWarnings({
     if (a$estimator == "coxph") {
+      st <- if (length(strata) > 0)
+        paste0(" + ", paste0("survival::strata(", strata, ")", collapse = " + ")) else ""
       f <- stats::as.formula(paste0("survival::Surv(", a$outcome_cols[1], ", ",
-                                    a$outcome_cols[2], ") ~ ", rhs))
+                                    a$outcome_cols[2], ") ~ ", rhs, st))
       survival::coxph(f, data = data)
     } else {
-      f <- stats::as.formula(paste0(a$outcome_cols[1], " ~ ", rhs))
+      st <- if (length(strata) > 0)
+        paste0(" + ", paste0("factor(", strata, ")", collapse = " + ")) else ""
+      f <- stats::as.formula(paste0(a$outcome_cols[1], " ~ ", rhs, st))
       fam <- if (a$estimator == "glm_binomial") stats::binomial() else stats::gaussian()
       stats::glm(f, data = data, family = fam)
     }
-  }, error = function(e) NULL, warning = function(w) invokeRestart("muffleWarning"))
+  }), error = function(e) NULL)
   if (is.null(fit)) return(NULL)
 
   cf <- stats::coef(fit)

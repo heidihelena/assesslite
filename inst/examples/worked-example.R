@@ -88,6 +88,7 @@ audit <- test_invariance(audit,
 # --- decide, export, report ---------------------------------------------------
 audit <- decide(audit, abstain_if = list(estimate_sign_changes = TRUE,
                                          effect_crosses_threshold = NULL))
+audit <- assumption_lattice(audit)
 print(audit)
 
 out_dir <- Sys.getenv("AUDIT_OUT", unset = tempdir())

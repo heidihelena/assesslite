@@ -17,6 +17,39 @@ verdict_chip <- function(v) {
   sprintf('<span class="chip %s">%s</span>', cls, lab)
 }
 
+# A small Hasse diagram of the pooling lattice: nodes by level (how much is
+# pooled), edges add one pooled axis, coloured by status.
+lattice_svg <- function(L) {
+  fill <- c(consistent = "#2e6e4e", attenuated = "#8a6d1f", reversed = "#a33d2e")
+  k <- length(L$axes)
+  nds <- L$nodes
+  W <- 540; H <- 60 + k * 90; pad <- 34
+  lev <- vapply(nds, function(x) x$n_pooled, integer(1))
+  pos <- vector("list", length(nds))
+  for (idx in seq_along(nds)) {
+    row_idx <- which(lev == lev[idx]); m <- length(row_idx); i <- match(idx, row_idx)
+    y <- H - pad - lev[idx] * ((H - 2 * pad) / max(k, 1))
+    x <- if (m == 1) W / 2 else pad + (i - 1) * (W - 2 * pad) / (m - 1)
+    pos[[idx]] <- list(x = x, y = y, pooled = sort(unlist(nds[[idx]]$pooled)),
+                       status = nds[[idx]]$status, est = nds[[idx]]$estimate)
+  }
+  edges <- ""
+  for (a in seq_along(pos)) for (b in seq_along(pos)) {
+    pa <- pos[[a]]$pooled; pb <- pos[[b]]$pooled
+    if (length(pb) == length(pa) + 1 && all(pa %in% pb))
+      edges <- paste0(edges, sprintf("<line x1='%.0f' y1='%.0f' x2='%.0f' y2='%.0f' stroke='#c7ccd3'/>",
+                                     pos[[a]]$x, pos[[a]]$y, pos[[b]]$x, pos[[b]]$y))
+  }
+  circles <- ""
+  for (p in pos) {
+    lab <- if (length(p$pooled) == 0) "none" else paste(substr(p$pooled, 1, 4), collapse = "+")
+    circles <- paste0(circles,
+      sprintf("<circle cx='%.0f' cy='%.0f' r='17' fill='%s'/><text x='%.0f' y='%.0f' text-anchor='middle' font-size='8' fill='#fff'>%s</text><text x='%.0f' y='%.0f' text-anchor='middle' font-size='9' fill='#5b6673'>%s</text>",
+              p$x, p$y, fill[[p$status]], p$x, p$y + 2, esc(lab), p$x, p$y + 32, fmt(p$est, 2)))
+  }
+  sprintf("<svg viewBox='0 0 %d %d' width='100%%' style='max-width:540px'>%s%s</svg>", W, H, edges, circles)
+}
+
 limitations_paragraph <- function(audit) {
   d <- audit$decision
   base <- switch(d$status,
@@ -147,6 +180,24 @@ render_report <- function(audit, path) {
   broken <- if (!is.null(d$broken_by))
     paste0("<p><strong>Broken by</strong>: ", esc(d$broken_by), "</p>") else ""
 
+  lattice_html <- ""
+  L <- audit$lattice
+  if (!is.null(L) && length(L$nodes) > 0) {
+    chip_of <- c(consistent = "ok", attenuated = "nr", reversed = "bad")
+    lrows <- paste0(vapply(L$nodes, function(nd) {
+      pooled <- if (length(unlist(nd$pooled))) paste(gsub("_", " ", unlist(nd$pooled)), collapse = ", ") else "nothing"
+      sprintf("<tr><td>pool: %s</td><td>%s [%s, %s]</td><td>%d</td><td><span class='chip %s'>%s</span></td></tr>",
+              esc(pooled), fmt(nd$estimate), fmt(nd$ci_low), fmt(nd$ci_high), nd$n,
+              chip_of[[nd$status]], esc(nd$status))
+    }, character(1)), collapse = "\n")
+    lattice_html <- sprintf(
+      "<h2>assumption lattice %s</h2><p class='meta'>pooling axes: %s (each node pools some axes and stratifies the rest)</p>%s
+       <table><tr><th>node</th><th>estimate (%s)</th><th>n</th><th>status</th></tr>%s</table>
+       <p class='reading'>%s</p>",
+      verdict_chip(L$verdict), esc(paste(gsub("_", " ", L$axes), collapse = ", ")),
+      lattice_svg(L), esc(a$scale), lrows, esc(L$reading))
+  }
+
   html <- sprintf("<!doctype html><html><head><meta charset='utf-8'>
 <title>structural audit — %s</title><style>%s</style></head><body><main>
 <h1>Structural audit</h1>
@@ -174,6 +225,8 @@ render_report <- function(audit, path) {
 <div class='decision %s'><span class='status'>%s</span>
 <p>%s</p>%s%s%s</div>
 
+%s
+
 <h2>limitations text (draft)</h2>
 <div class='draft'>%s</div>
 </main></body></html>",
@@ -191,6 +244,7 @@ render_report <- function(audit, path) {
     esc(a$scale), fmt(e$value), fmt(e$ci_low), fmt(e$ci_high), e$n,
     test_blocks,
     d$status, toupper(d$status), esc(d$rationale), load_b, surface, broken,
+    lattice_html,
     esc(limitations_paragraph(audit)))
 
   con <- file(path, open = "w", encoding = "UTF-8")

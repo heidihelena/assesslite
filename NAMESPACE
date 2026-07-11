@@ -1,5 +1,6 @@
 export(structural_audit)
 export(declare_graph)
+export(assumption_lattice)
 export(assume_invariance)
 export(reject_invariance)
 export(test_invariance)
