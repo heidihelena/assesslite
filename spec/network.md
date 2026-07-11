@@ -33,7 +33,9 @@ be `|est_0|` on its natural scale.
 
 The `spillover` block records the neighbour-exposure coefficient and interval, the exposure
 estimate ignoring and accounting for neighbours, and the number of units with at least one
-neighbour. ## Exposure mappings (v0.4 addition)
+neighbour.
+
+## Exposure mappings (v0.4 addition)
 
 The neighbour-exposure summary is declared via `exposure_map`:
 - `mean` (default) — mean exposure among neighbours: spillover scales with the exposed
