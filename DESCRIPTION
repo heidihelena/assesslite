@@ -22,5 +22,6 @@ BugReports: https://github.com/heidihelena/assesslite/issues
 Encoding: UTF-8
 Depends: R (>= 4.1)
 Imports: jsonlite, stats, utils, tools
-Suggests: survival, testthat (>= 3.0.0)
+Suggests: survival, testthat (>= 3.0.0), knitr, rmarkdown
+VignetteBuilder: knitr
 RoxygenNote: 7.3.3

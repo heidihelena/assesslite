@@ -1,0 +1,139 @@
+---
+title: "Auditing the assumptions behind a causal estimate"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Auditing the assumptions behind a causal estimate}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Every causal estimate borrows strength across units, places, or times. That borrowing is
+licensed by invariance assumptions — "these transformations of the system leave the causal
+mechanism unchanged" — which usually stay implicit inside exchangeability or i.i.d. sampling.
+AssessLite makes them explicit, attacks them, and records what survived.
+
+This vignette walks the full loop on simulated multicentre data: declare the structure,
+build the invariance ledger, attack it, decide, and export the audit record. All data are
+simulated; verdicts are three-way — stable, unstable, or **not resolvable at this n** —
+because every stability gate is a bright line on a noisy estimate.
+
+## Simulated data
+
+A binary outcome, a binary exposure confounded by age, and units clustered in six sites over
+six calendar years:
+
+```{r}
+library(assesslite)
+
+set.seed(7)
+n <- 1500
+site <- sample(paste0("S", 1:6), n, replace = TRUE)
+year <- sample(2019:2024, n, replace = TRUE)
+age  <- rnorm(n, 65, 8)
+x    <- rbinom(n, 1, plogis(-0.03 * (age - 65)))          # exposure, confounded by age
+y    <- rbinom(n, 1, plogis(-0.8 + 0.05 * (age - 65) - 0.6 * x))
+d    <- data.frame(site, year, age, x, y)
+```
+
+## Open the assessment and declare the structure
+
+`structural_audit()` fits the declared estimator (a logistic GLM here; a Cox model when
+`outcome = c(time, status)`) and records the observational world as you describe it:
+
+```{r}
+audit <- structural_audit(
+  data       = d,
+  outcome    = "y",
+  exposure   = "x",
+  covariates = "age",
+  cluster    = "site",
+  time       = "year",
+  unit       = "participant"
+)
+audit
+```
+
+## The invariance ledger
+
+Each entry names a claim from the core vocabulary, why it is scientifically defensible here,
+and what inferential step it buys. An assumption with no stated licence should be questioned —
+if it buys nothing, why assume it?
+
+```{r}
+audit <- assume_invariance(audit, "cluster_exchangeability",
+  rationale = "sites follow one protocol; assumed provisionally so it can be attacked",
+  licenses  = "one pooled effect across sites; transport to a site outside the sample")
+
+audit <- assume_invariance(audit, "temporal_translation",
+  rationale = "no protocol change inside the study window",
+  licenses  = "pooling all years; applying the estimate forward")
+
+audit <- assume_invariance(audit, "unobserved_confounding",
+  rationale = "age is adjusted, but comorbidity is not measured",
+  licenses  = "reading the adjusted odds ratio as the causal effect")
+```
+
+A declared causal graph extends the ledger to identification. Marking a node `latent`
+lets the engine reason about what you did **not** measure:
+
+```{r}
+audit <- declare_graph(audit, c("age -> x", "age -> y", "x -> y"))
+audit <- assume_invariance(audit, "adjustment_sufficiency",
+  rationale = "the adjustment set is read off the declared graph",
+  licenses  = "treating {age} as sufficient adjustment")
+```
+
+## Attack the ledger
+
+Each attack targets one named invariance and returns a three-way verdict:
+
+```{r}
+audit <- test_invariance(audit, tests = c(
+  "unit_permutation",        # sanity: estimator ignores row order
+  "cluster_holdout",         # does any single site drive the estimate?
+  "temporal_split",          # does the effect drift across years?
+  "confounding_sensitivity", # E-value: how strong must unmeasured confounding be?
+  "adjustment_check"         # does {age} satisfy the backdoor criterion in the graph?
+))
+audit
+```
+
+## Decide, export, report
+
+The decision layer applies the abstention rules: a resolved instability on a relied-on
+invariance forces `abstain`; anything untested or unresolved caps the decision at
+`conditional`; `proceed` requires every attacked assumption to come back stable.
+
+```{r}
+audit <- decide(audit, abstain_if = list(estimate_sign_changes = TRUE))
+audit$decision$status
+audit$decision$rationale
+```
+
+The durable outputs are a JSON audit record (the complete reasoning path, validated against
+the shared schema that the Python engine also writes) and a self-contained HTML report whose
+final section is an auto-drafted limitations paragraph for the analyst to edit:
+
+```{r}
+audit_path  <- file.path(tempdir(), "audit.json")
+report_path <- file.path(tempdir(), "report.html")
+write_audit(audit, audit_path)
+render_report(audit, report_path)
+```
+
+## Reading the result
+
+Three things distinguish the audit from a pile of robustness checks. First, every attack is
+tied to a **named assumption** in the ledger, so the report shows which claims did the
+identification work and which are the exposed surface. Second, verdicts are **three-way**:
+"not resolvable at this n" is an honest answer that neither a pass nor a fail can give.
+Third, the audit is a **portable object** — the JSON record can be archived alongside the
+manuscript, and a reader can re-derive every verdict from its recorded metrics.
+
+For spatial data (`coords =`), networked data (`unit_id =`, `edges =`), positivity,
+bias-analysis scenario grids, and the pooling assumption lattice, see the package README
+and the specification files under `spec/` in the repository.
