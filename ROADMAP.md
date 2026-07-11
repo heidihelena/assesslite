@@ -22,6 +22,18 @@ of an audit file is a `spec/` change and bumps the spec version.
   Python-written audits both conform to `spec/schema/audit.schema.json` (the round-trip
   contract). Brought forward from v0.5 once the spec froze.
 
+## v0.3 — in progress
+
+- **Latent (unmeasured) nodes** — **done.** `declare_graph(edges, latent = ...)` marks graph
+  nodes that are part of the causal structure but not measured. `adjustment_check` now answers
+  identifiability: a valid observed adjustment set exists iff the canonical set (van der Zander
+  et al.) is valid; if not, the effect is not identifiable by covariate adjustment and the
+  verdict is `not_resolvable` (capping the decision at `conditional`), with the `identifiable`
+  flag recorded. `graph_check` skips any implication touching a latent node as not-testable.
+  Both R and Python; schema gains an `identifiable` field. Verified on a latent-confounder DAG.
+- Still ahead: simulation-based violation testing; spatial/network transformation groups; a
+  richer lattice that re-estimates identifiability per node.
+
 ## v0.2 — wrap the established tools (the defensible product line)
 
 - **Confounding sensitivity** — **done (v0.2.0).** New `unobserved_confounding` invariance

@@ -29,9 +29,11 @@ V  ⟂  W  |  parents(V)
 ```
 
 Each such statement is a testable claim. A statement is **testable** here only when V and W are
-each numeric or binary (coercible to one column); a statement whose V or W is a multi-level
-categorical is recorded as **not testable** and skipped, never silently passed. Conditioning
-variables of any type are allowed (categoricals are expanded to indicator columns).
+each numeric or binary (coercible to one column) and every node it touches is observed; a
+statement whose V or W is a multi-level categorical, or whose endpoints or conditioning set
+include a **latent** node (declared via `declare_graph(..., latent = ...)`) or any node absent
+from the data, is recorded as **not testable** and skipped, never silently passed. Conditioning
+variables of any observed type are allowed (categoricals are expanded to indicator columns).
 
 ## Test
 

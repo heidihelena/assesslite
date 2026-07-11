@@ -82,6 +82,11 @@ def test_graph_check(assessment, alpha: float = 0.05, effect_floor: float = 0.1)
         raise ValueError("graph_check needs a declared graph; call declare_graph() first")
     d = assessment.data
     order, parents = g["order"], g["parents"]
+    latent = set(g.get("latent", []))
+
+    def observed(v):
+        return v not in latent and v in d.columns
+
     imps = []
 
     for i, V in enumerate(order):
@@ -90,8 +95,10 @@ def test_graph_check(assessment, alpha: float = 0.05, effect_floor: float = 0.1)
         for W in [p for p in preds if p not in par]:
             cond = list(par)
             claim = "{} _||_ {} | {{{}}}".format(V, W, ", ".join(cond))
-            vv = coerce_numeric(d[V]) if V in d.columns else None
-            ww = coerce_numeric(d[W]) if W in d.columns else None
+            # testable only if both endpoints and every conditioning node are observed
+            testable = observed(V) and observed(W) and all(observed(c) for c in cond)
+            vv = coerce_numeric(d[V]) if testable else None
+            ww = coerce_numeric(d[W]) if testable else None
             if vv is None or ww is None:
                 imps.append({"claim": claim, "conditioning": cond, "partial_r": None,
                              "p_value": None, "n": None, "status": "not_testable"})
@@ -244,17 +251,26 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
                   f"cannot check the adjustment set: exposure '{X}' or outcome "
                   f"'{Y if Y else '<none>'}' is not a node in the declared graph",
                   {"exposure": X, "outcome": Y, "adjusted": adjusted, "sufficient_set": [],
-                   "valid": None, "open_backdoor": None, "over_adjustment": [], "missing": []})
+                   "valid": None, "identifiable": None, "open_backdoor": None,
+                   "over_adjustment": [], "missing": []})
 
-    Z = [c for c in adjusted if c in g["nodes"]]
+    latent = set(g.get("latent", []))
+    observed = [v for v in g["nodes"] if v not in latent]
+    Z = [c for c in adjusted if c in observed]
     desc_X = descendants_of(parents, X)
     over = [c for c in adjusted if c in desc_X]
     pxbar = {v: [p for p in ps if p != X] for v, ps in parents.items()}
     open_backdoor = not d_separated(pxbar, X, Y, Z)
-    valid = (len(over) == 0) and not open_backdoor
 
-    suff = [p for p in parents[X] if p in g["nodes"]]
-    if backdoor_valid(parents, X, Y, suff):
+    # canonical observed adjustment set (van der Zander et al.): a valid adjustment set
+    # exists iff this one is valid.
+    anc = ancestors_of(parents, {X, Y})
+    z_all = [v for v in anc if v in observed and v not in ({X, Y} | desc_X)]
+    identifiable = backdoor_valid(parents, X, Y, z_all)
+    valid = (len(over) == 0) and not open_backdoor and identifiable
+
+    suff = list(z_all)
+    if identifiable:
         changed = True
         while changed:
             changed = False
@@ -265,12 +281,22 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
                     break
     missing = [s for s in suff if s not in Z]
 
-    adj = {"exposure": X, "outcome": Y, "adjusted": adjusted, "sufficient_set": suff,
-           "valid": valid, "open_backdoor": open_backdoor,
+    adj = {"exposure": X, "outcome": Y, "adjusted": adjusted,
+           "sufficient_set": suff if identifiable else [],
+           "valid": valid, "identifiable": identifiable, "open_backdoor": open_backdoor,
            "over_adjustment": over, "missing": missing}
 
     def fmt(s):
         return ", ".join(s) if s else "empty"
+
+    if not identifiable:
+        lat_txt = (f" (e.g. through the unmeasured node(s) {{{fmt(sorted(latent))}}})"
+                   if latent else "")
+        reading = (f"given the declared graph, the effect of {X} on {Y} is not identifiable by "
+                   f"adjusting for measured covariates: a backdoor path cannot be blocked by any "
+                   f"observed set{lat_txt}. No adjustment is sufficient; this is not resolvable by "
+                   f"covariate adjustment")
+        return mk("not_resolvable", reading, adj)
 
     if valid:
         reading = (f"the adjusted covariates {{{fmt(Z)}}} satisfy the backdoor criterion for "

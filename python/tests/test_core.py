@@ -245,6 +245,40 @@ def test_adjustment_check_flags_under_and_over_adjustment():
     assert over["adjustment"]["over_adjustment"] == ["M"]
 
 
+def test_adjustment_check_latent_non_identifiability():
+    rng = np.random.default_rng(1); n = 1000
+    U = rng.normal(size=n); C = rng.normal(size=n)
+    X = rng.binomial(1, 1/(1+np.exp(-(0.8*U + 0.6*C))))
+    Y = rng.binomial(1, 1/(1+np.exp(-(0.7*U + 0.5*C + 0.5*X))))
+    d = pd.DataFrame({"C": C, "X": X, "Y": Y})
+
+    def run(covs, edges, latent=()):
+        a = StructuralAudit(d, outcome="Y", exposure="X", covariates=covs)
+        a.declare_graph(edges, latent=latent)
+        a.test(["adjustment_check"])
+        return a.tests["adjustment_check"]
+
+    r1 = run(["C"], ["U -> X", "U -> Y", "C -> X", "C -> Y", "X -> Y"], latent=["U"])
+    assert r1["verdict"] == "not_resolvable"
+    assert r1["adjustment"]["identifiable"] is False
+    r2 = run(["C"], ["C -> X", "C -> Y", "X -> Y"])
+    assert r2["verdict"] == "stable"
+    assert r2["adjustment"]["identifiable"] is True
+
+
+def test_declare_graph_validates_latent_and_skips_latent_implications():
+    d = pd.DataFrame({"C": np.random.default_rng(0).normal(size=50),
+                      "X": np.random.default_rng(1).binomial(1, 0.5, 50),
+                      "Y": np.random.default_rng(2).binomial(1, 0.5, 50)})
+    a = StructuralAudit(d, outcome="Y", exposure="X")
+    with pytest.raises(ValueError, match="not in the graph"):
+        a.declare_graph(["C -> X", "X -> Y"], latent=["Q"])
+    a.declare_graph(["U -> X", "U -> Y", "X -> Y"], latent=["U"]).test(["graph_check"])
+    for im in a.tests["graph_check"]["implications"]:
+        if "U" in im["claim"]:
+            assert im["status"] == "not_testable"
+
+
 def test_declare_graph_rejects_cycle_and_graph_check_needs_graph():
     d = pd.DataFrame({"a": np.random.default_rng(0).normal(size=50),
                       "b": np.random.default_rng(1).normal(size=50),

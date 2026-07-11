@@ -26,18 +26,26 @@ parse_graph <- function(edges) {
   list(edges = edges, nodes = nodes, parents = parents, order = placed)
 }
 
-#' Declare a causal DAG for the graph_check attack
+#' Declare a causal DAG for the graph_check and adjustment_check attacks
 #'
 #' @param audit a structural_audit object.
 #' @param edges character vector of directed edges, e.g. c("age -> adherence",
 #'   "stage -> survival"). Nodes are the union of everything named.
-declare_graph <- function(audit, edges) {
+#' @param latent character vector of node names that are part of the causal
+#'   structure but not measured (e.g. an unmeasured confounder). Latent nodes may
+#'   not enter an adjustment set, and implications that touch them are not testable.
+declare_graph <- function(audit, edges, latent = character()) {
   stopifnot(inherits(audit, "structural_audit"))
   g <- parse_graph(edges)
-  missing <- setdiff(g$nodes, names(audit$data))
+  bad_latent <- setdiff(latent, g$nodes)
+  if (length(bad_latent) > 0)
+    stop("latent nodes not in the graph: ", paste(bad_latent, collapse = ", "))
+  g$latent <- latent
+  # observed graph nodes absent from the data (excluding the ones declared latent)
+  missing <- setdiff(setdiff(g$nodes, latent), names(audit$data))
   if (length(missing) > 0)
-    warning("graph nodes not found in the data (implications involving them will be skipped): ",
-            paste(missing, collapse = ", "))
+    warning("graph nodes not found in the data and not declared latent ",
+            "(implications involving them will be skipped): ", paste(missing, collapse = ", "))
   audit$graph <- g
   audit
 }
@@ -77,6 +85,8 @@ test_graph_check <- function(audit, alpha = 0.05, effect_floor = 0.1) {
   g <- audit$graph
   if (is.null(g)) stop("graph_check needs a declared graph; call declare_graph() first")
   d <- audit$data; ord <- g$order; parents <- g$parents
+  latent <- if (is.null(g$latent)) character() else g$latent
+  observed <- function(v) !(v %in% latent) && (v %in% names(d))
   imps <- list()
 
   for (i in seq_along(ord)) {
@@ -86,8 +96,11 @@ test_graph_check <- function(audit, alpha = 0.05, effect_floor = 0.1) {
     for (W in setdiff(preds, par)) {
       cond <- par
       claim <- sprintf("%s _||_ %s | {%s}", V, W, paste(cond, collapse = ", "))
-      vv <- if (V %in% names(d)) coerce_numeric(d[[V]]) else NULL
-      ww <- if (W %in% names(d)) coerce_numeric(d[[W]]) else NULL
+      # an implication is testable only if both endpoints and every conditioning
+      # node are observed (not latent, present in the data)
+      testable <- observed(V) && observed(W) && all(vapply(cond, observed, logical(1)))
+      vv <- if (testable) coerce_numeric(d[[V]]) else NULL
+      ww <- if (testable) coerce_numeric(d[[W]]) else NULL
       if (is.null(vv) || is.null(ww)) {
         imps[[length(imps) + 1]] <- list(claim = claim, conditioning = cond,
           partial_r = NA_real_, p_value = NA_real_, n = NA_integer_, status = "not_testable")
@@ -234,11 +247,13 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
               X, if (is.na(Y)) "<none>" else Y),
       list(exposure = X, outcome = if (is.na(Y)) NA_character_ else Y,
            adjusted = I(as.character(adjusted)), sufficient_set = I(character(0)),
-           valid = NA, open_backdoor = NA, over_adjustment = I(character(0)),
-           missing = I(character(0)))))
+           valid = NA, identifiable = NA, open_backdoor = NA,
+           over_adjustment = I(character(0)), missing = I(character(0)))))
   }
 
-  Z <- intersect(adjusted, g$nodes)
+  latent <- if (is.null(g$latent)) character() else g$latent
+  observed <- setdiff(g$nodes, latent)
+  Z <- intersect(adjusted, observed)
   desc_X <- descendants_of(g$parents, X)
   over <- intersect(adjusted, desc_X)
   parents_xbar <- g$parents
@@ -246,9 +261,15 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
   open_backdoor <- !d_separated(parents_xbar, X, Y, Z)
   valid <- (length(over) == 0) && !open_backdoor
 
-  # minimal sufficient set: greedily reduce pa(X)
-  suff <- intersect(g$parents[[X]], g$nodes)
-  if (backdoor_valid(g$parents, X, Y, suff)) {
+  # canonical observed adjustment set (van der Zander et al.): a valid adjustment
+  # set exists iff this one is valid. Ancestors of X or Y, observed, not X/Y and
+  # not descendants of X.
+  z_all <- setdiff(intersect(ancestors_of(g$parents, c(X, Y)), observed), c(X, Y, desc_X))
+  identifiable <- backdoor_valid(g$parents, X, Y, z_all)
+
+  # minimal sufficient set: greedily reduce the canonical set
+  suff <- z_all
+  if (identifiable) {
     changed <- TRUE
     while (changed) {
       changed <- FALSE
@@ -261,11 +282,20 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
 
   adj <- list(exposure = X, outcome = Y,
               adjusted = I(as.character(adjusted)),
-              sufficient_set = I(as.character(suff)),
-              valid = valid, open_backdoor = open_backdoor,
+              sufficient_set = I(as.character(if (identifiable) suff else character(0))),
+              valid = valid && identifiable, identifiable = identifiable,
+              open_backdoor = open_backdoor,
               over_adjustment = I(as.character(over)),
               missing = I(as.character(missing)))
 
+  if (!identifiable) {
+    lat_txt <- if (length(latent) > 0) sprintf(" (e.g. through the unmeasured node(s) {%s})",
+                                               paste(latent, collapse = ", ")) else ""
+    reading <- sprintf(paste0("given the declared graph, the effect of %s on %s is not identifiable by ",
+      "adjusting for measured covariates: a backdoor path cannot be blocked by any observed set%s. ",
+      "No adjustment is sufficient; this is not resolvable by covariate adjustment"), X, Y, lat_txt)
+    return(mk("not_resolvable", reading, adj))
+  }
   if (valid) {
     reading <- sprintf(paste0("the adjusted covariates {%s} satisfy the backdoor criterion for %s -> %s ",
       "in the declared graph; the adjustment agrees with the graph (a sufficient set is {%s})"),
