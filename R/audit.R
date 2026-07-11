@@ -31,12 +31,16 @@ invariance_vocabulary <- function() {
 #' @param estimand plain-language statement of the target quantity.
 structural_audit <- function(data, outcome, exposure, covariates = character(),
                              cluster = NULL, time = NULL, subgroups = character(),
-                             unit = "unit", estimand = NULL) {
+                             coords = NULL, unit = "unit", estimand = NULL) {
   stopifnot(is.data.frame(data))
-  needed <- c(outcome, exposure, covariates, cluster, time, subgroups)
+  if (!is.null(coords) && length(coords) != 2)
+    stop("coords must be two column names, c(x, y) or c(lon, lat)")
+  needed <- c(outcome, exposure, covariates, cluster, time, subgroups, coords)
   missing_cols <- setdiff(needed, names(data))
   if (length(missing_cols) > 0)
     stop("columns not in data: ", paste(missing_cols, collapse = ", "))
+  if (!is.null(coords) && !all(vapply(coords, function(c) is.numeric(data[[c]]), logical(1))))
+    stop("coords columns must be numeric")
 
   if (length(outcome) == 2) {
     if (!requireNamespace("survival", quietly = TRUE))
@@ -62,7 +66,7 @@ structural_audit <- function(data, outcome, exposure, covariates = character(),
                     outcome_cols = outcome, exposure = exposure,
                     covariates = covariates, estimand = estimand,
                     estimator = estimator, scale = scale),
-    structure = list(cluster = cluster, time = time, subgroups = subgroups),
+    structure = list(cluster = cluster, time = time, subgroups = subgroups, coords = coords),
     ledger = list(),
     tests = list(),
     estimate = NULL,

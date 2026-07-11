@@ -31,6 +31,7 @@ def target_invariance(assessment, test: str) -> str:
         "confounding_sensitivity": "unobserved_confounding",
         "graph_check": "causal_graph",
         "adjustment_check": "adjustment_sufficiency",
+        "spatial_holdout": "spatial_translation",
     }[test]
 
 

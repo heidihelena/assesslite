@@ -24,7 +24,8 @@
       "properties": {
         "cluster": { "type": ["string", "null"] },
         "time": { "type": ["string", "null"] },
-        "subgroups": { "type": "array", "items": { "type": "string" } }
+        "subgroups": { "type": "array", "items": { "type": "string" } },
+        "coords": { "type": ["array", "null"], "items": { "type": "string" } }
       }
     },
     "ledger": {
@@ -66,6 +67,7 @@
             "type": "object",
             "properties": {
               "max_shift_z": { "type": ["number", "null"] },
+              "shift_p_bonf": { "type": ["number", "null"] },
               "sign_flips_resolved": { "type": "integer" },
               "sign_flips_unresolved": { "type": "integer" },
               "mds": { "type": ["number", "null"] },

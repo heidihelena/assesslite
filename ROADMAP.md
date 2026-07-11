@@ -24,6 +24,17 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.3 — in progress
 
+- **Spatial attack** — **done.** `structural_audit(..., coords = c(x, y))` declares
+  coordinates; `spatial_holdout` attacks the `spatial_translation` invariance by
+  leave-one-spatial-block-out over a k×k quantile grid — does any region drive the estimate?
+  Three-way verdict, both R and Python, `structure.coords` in the schema. Spec: `spec/spatial.md`.
+- **Multiplicity fix in the holdout verdict rule** — **done (spec v0.3).** Spatial holdout (many
+  blocks) exposed that the old `max_shift_z > 2` rule flags ~m times too often under stability;
+  with 9 blocks the false-positive rate is ~34%. The verdict now uses a Bonferroni-adjusted
+  `shift_p_bonf` (min over variants of m × the two-sided shift p-value). This corrected a
+  spurious `cluster_holdout` → abstain in the worked example (12 hospitals). Applies to every
+  holdout attack (cluster, temporal, subgroup, spatial); R `pnorm` and Python `erfc` agree
+  bit-for-bit. See `spec/stability/metrics.md`.
 - **Latent (unmeasured) nodes** — **done.** `declare_graph(edges, latent = ...)` marks graph
   nodes that are part of the causal structure but not measured. `adjustment_check` now answers
   identifiability: a valid observed adjustment set exists iff the canonical set (van der Zander

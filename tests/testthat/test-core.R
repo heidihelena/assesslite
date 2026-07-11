@@ -88,6 +88,33 @@ test_that("untested assumed invariances cap the decision at conditional", {
     expect_true("temporal_translation" %in% a$decision$exposed_surface)
 })
 
+test_that("spatial_holdout flags regional heterogeneity and passes a stationary field", {
+  set.seed(2); n <- 3000
+  lon <- runif(n, 0, 10); lat <- runif(n, 0, 10); x <- rbinom(n, 1, 0.5)
+  eff <- ifelse(lon < 5, -1.8, 0.0)
+  y <- rbinom(n, 1, plogis(0.2 + eff * x))
+  d <- data.frame(y = y, x = x, lon = lon, lat = lat)
+  a <- structural_audit(d, outcome = "y", exposure = "x", coords = c("lon", "lat"))
+  a <- assume_invariance(a, "spatial_translation", "homog", "pool across space")
+  a <- test_invariance(a, tests = "spatial_holdout", spatial_k = 2)
+  expect_equal(a$tests$spatial_holdout$verdict, "unstable")
+  expect_equal(nrow(a$tests$spatial_holdout$variants), 4)
+
+  y2 <- rbinom(n, 1, plogis(-0.6 * x))
+  d2 <- data.frame(y = y2, x = x, lon = lon, lat = lat)
+  a2 <- structural_audit(d2, outcome = "y", exposure = "x", coords = c("lon", "lat"))
+  a2 <- assume_invariance(a2, "spatial_translation", "h", "p")
+  a2 <- test_invariance(a2, tests = "spatial_holdout", spatial_k = 3)
+  expect_equal(a2$tests$spatial_holdout$verdict, "stable")
+})
+
+test_that("coords are validated and spatial_holdout needs them", {
+  d <- data.frame(y = rbinom(50, 1, .5), x = rbinom(50, 1, .5), lon = runif(50))
+  expect_error(structural_audit(d, outcome = "y", exposure = "x", coords = "lon"), "two column")
+  a <- structural_audit(d, outcome = "y", exposure = "x")
+  expect_error(test_invariance(a, tests = "spatial_holdout"), "declared coordinates")
+})
+
 test_that("E-value matches the published value and confounding_sensitivity runs", {
   expect_equal(round(evalue_from_ratio(3.9), 2), 7.26)
   expect_equal(evalue_from_ratio(1), 1)

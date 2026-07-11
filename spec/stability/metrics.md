@@ -23,10 +23,16 @@ null value 0 on that scale (log HR, log OR, linear coefficient).
   — roughly the smallest shift this attack could have resolved at this n.
 - `null_crossings` = count of variants whose interval includes 0 when the full-sample
   interval excludes 0 (or vice versa) — variants that change the qualitative reading.
+- `shift_p_bonf` = min(1, m × min_j p_j), where m is the number of variants and
+  p_j = 2Φ(−|shift_z_j|) is the two-sided normal p-value for variant j's shift. This is the
+  Bonferroni-adjusted smallest per-variant shift p-value. **Multiplicity matters**: a bare
+  `max_shift_z > 2` threshold flags roughly m times too often under a stable mechanism (with
+  m = 9 spatial blocks the false-positive rate is ~34%), so the verdict is driven by
+  `shift_p_bonf`, not by `max_shift_z` (which is retained only as a descriptive magnitude).
 
 ## Verdict rule (three-way; deterministic given the metrics)
 
-1. `unstable` if `sign_flips_resolved` ≥ 1 OR `max_shift_z` > 2.
+1. `unstable` if `sign_flips_resolved` ≥ 1 OR `shift_p_bonf` < 0.05.
 2. else `not_resolvable` if `mds` > max(2 × se_0, |est_0|)
    — the attack could not have detected a shift as large as the estimate itself, or
    twice the full-sample noise level, so "no shift seen" is uninformative.
@@ -36,7 +42,9 @@ Special case `unit_permutation`: `unstable` if any |est_j − est_0| exceeds num
 tolerance (1e−8); `not_resolvable` only if refits fail; otherwise `stable`. No interval
 logic — this test is deterministic.
 
-These thresholds (2 se, 1.96, the mds comparison) are declared assessment heuristics of
-spec v0.1, not laws. They are versioned here so that a verdict in any audit file is
-reproducible from its recorded metrics, and so that changing them is a spec change, not
-a silent package change. Implementations must record the spec version in every audit.
+These thresholds (α = 0.05 family-wise, the 1.96 in `mds`, the mds comparison) are declared
+assessment heuristics, not laws. They are versioned here so that a verdict in any audit file
+is reproducible from its recorded metrics, and so that changing them is a spec change, not a
+silent package change. The Bonferroni `shift_p_bonf` rule (spec v0.3) replaces the earlier
+bare `max_shift_z > 2` rule (spec v0.1), which over-flagged attacks with many variants.
+Implementations must record the spec version in every audit.

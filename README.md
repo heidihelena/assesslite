@@ -133,6 +133,10 @@ shared schema.
 
 All fold into the same three-way verdicts and decision rules.
 
+For spatial data, `structural_audit(..., coords = c("lon", "lat"))` enables `spatial_holdout` —
+leave-one-spatial-block-out over a grid, attacking the `spatial_translation` invariance (does any
+region drive the estimate?). See `spec/spatial.md`.
+
 It also builds an **assumption lattice** (`assumption_lattice()`): the pooling invariances
 ("pool across clusters / time") are the "stronger symmetry → one number" commitments, so the
 lattice refits the exposure estimate under every pool-or-stratify combination and shows, as a

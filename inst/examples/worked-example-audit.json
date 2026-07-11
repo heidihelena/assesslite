@@ -12,7 +12,8 @@
   "structure": {
     "cluster": "hospital",
     "time": "diagnosis_year",
-    "subgroups": ["stage"]
+    "subgroups": ["stage"],
+    "coords": null
   },
   "ledger": [
     {
@@ -242,6 +243,7 @@
       "reading": "the largest variant shift was 1.6 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.13, so the claim of cluster exchangeability holds up under this test",
       "metrics": {
         "max_shift_z": 1.6080863041,
+        "shift_p_bonf": 1,
         "sign_flips_resolved": 0,
         "sign_flips_unresolved": 0,
         "mds": 0.13065831327,
@@ -274,6 +276,7 @@
       "reading": "the largest variant shift was 0.5 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.18, so the claim of temporal translation holds up under this test",
       "metrics": {
         "max_shift_z": 0.519160353,
+        "shift_p_bonf": 1,
         "sign_flips_resolved": 0,
         "sign_flips_unresolved": 0,
         "mds": 0.17746506992,
@@ -322,6 +325,7 @@
       "reading": "variant intervals are too wide to distinguish stability from instability: the smallest detectable shift (about 0.28) exceeds both the estimate (0.24) and twice its standard error; this attack is not resolvable at this n",
       "metrics": {
         "max_shift_z": 1.9763524838,
+        "shift_p_bonf": 0.19245947679,
         "sign_flips_resolved": 0,
         "sign_flips_unresolved": 1,
         "mds": 0.27819946235,
@@ -399,6 +403,7 @@
         "adjusted": ["age", "sex", "stage"],
         "sufficient_set": ["age", "stage"],
         "valid": true,
+        "identifiable": true,
         "open_backdoor": false,
         "over_adjustment": [],
         "missing": []
@@ -417,9 +422,9 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T13:58:48+0300",
+    "created": "2026-07-11T15:15:16+0300",
     "engine": "assesslite",
-    "engine_version": "0.2.0",
+    "engine_version": "0.3.0",
     "platform": "R version 4.4.2 (2024-10-31)",
     "spec_version": "0.1",
     "data_fingerprint": {

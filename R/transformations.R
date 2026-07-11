@@ -106,12 +106,13 @@ test_subgroup_stability <- function(audit) {
 test_invariance <- function(audit,
                             tests = c("unit_permutation", "cluster_holdout",
                                       "temporal_split", "subgroup_stability"),
-                            seed = 1, confounding_benchmark = 1.25, outcome_node = NULL) {
+                            seed = 1, confounding_benchmark = 1.25, outcome_node = NULL,
+                            spatial_k = 3) {
   stopifnot(inherits(audit, "structural_audit"))
   set.seed(seed)
   known <- c("unit_permutation", "cluster_holdout", "temporal_split",
              "subgroup_stability", "confounding_sensitivity", "graph_check",
-             "adjustment_check")
+             "adjustment_check", "spatial_holdout")
   bad <- setdiff(tests, known)
   if (length(bad) > 0) stop("unknown tests: ", paste(bad, collapse = ", "))
   target_invariance <- function(t) switch(t,
@@ -122,7 +123,8 @@ test_invariance <- function(audit,
     subgroup_stability      = "subgroup_transport",
     confounding_sensitivity = "unobserved_confounding",
     graph_check             = "causal_graph",
-    adjustment_check        = "adjustment_sufficiency")
+    adjustment_check        = "adjustment_sufficiency",
+    spatial_holdout         = "spatial_translation")
   for (t in tests) {
     inv <- target_invariance(t)
     if (identical(ledger_status(audit, inv), "rejected")) {
@@ -137,7 +139,8 @@ test_invariance <- function(audit,
       subgroup_stability      = test_subgroup_stability(audit),
       confounding_sensitivity = test_confounding_sensitivity(audit, confounding_benchmark),
       graph_check             = test_graph_check(audit),
-      adjustment_check        = test_adjustment_check(audit, outcome_node))
+      adjustment_check        = test_adjustment_check(audit, outcome_node),
+      spatial_holdout         = test_spatial_holdout(audit, spatial_k))
     audit$tests[[t]] <- res
     audit <- mark_tested(audit, res$invariance, res$verdict)
   }
