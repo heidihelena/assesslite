@@ -54,6 +54,14 @@
       "licenses": "reading the adjusted hazard ratio as the causal effect of adherence",
       "tested": true,
       "verdict": "stable"
+    },
+    {
+      "invariance": "causal_graph",
+      "status": "assumed",
+      "rationale": "the adjustment set is read off this declared DAG",
+      "licenses": "treating {age, sex, stage} as sufficient adjustment for the adherence effect",
+      "tested": true,
+      "verdict": "stable"
     }
   ],
   "estimate": {
@@ -327,12 +335,54 @@
         "rr_ci_high": 0.88736699739,
         "benchmark": 1.25
       }
+    },
+    {
+      "test": "graph_check",
+      "invariance": "causal_graph",
+      "verdict": "stable",
+      "variants": [],
+      "n_failed_refits": 0,
+      "reading": "every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph <U+2014> Markov-equivalent graphs share these implications",
+      "implications": [
+        {
+          "claim": "stage _||_ age | {}",
+          "conditioning": [],
+          "partial_r": null,
+          "p_value": null,
+          "n": null,
+          "status": "not_testable"
+        },
+        {
+          "claim": "sex _||_ age | {}",
+          "conditioning": [],
+          "partial_r": 0.0062,
+          "p_value": 0.7758,
+          "n": 2129,
+          "status": "consistent"
+        },
+        {
+          "claim": "sex _||_ stage | {}",
+          "conditioning": [],
+          "partial_r": null,
+          "p_value": null,
+          "n": null,
+          "status": "not_testable"
+        },
+        {
+          "claim": "adherence _||_ sex | {age, stage}",
+          "conditioning": ["age", "stage"],
+          "partial_r": -0.0071,
+          "p_value": 0.7436,
+          "n": 2129,
+          "status": "consistent"
+        }
+      ]
     }
   ],
   "decision": {
     "status": "conditional",
     "rationale": "the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)",
-    "load_bearing": ["unit_permutation_within_cluster", "cluster_exchangeability", "temporal_translation", "unobserved_confounding"],
+    "load_bearing": ["unit_permutation_within_cluster", "cluster_exchangeability", "temporal_translation", "unobserved_confounding", "causal_graph"],
     "exposed_surface": ["subgroup_transport"],
     "broken_by": null,
     "abstention_rules": {
@@ -341,7 +391,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T11:26:12+0300",
+    "created": "2026-07-11T12:46:27+0300",
     "engine": "assesslite",
     "engine_version": "0.2.0",
     "platform": "R version 4.4.2 (2024-10-31)",

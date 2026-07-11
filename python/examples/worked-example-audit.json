@@ -60,6 +60,14 @@
       "licenses": "reading the adjusted hazard ratio as the causal effect of adherence",
       "tested": true,
       "verdict": "stable"
+    },
+    {
+      "invariance": "causal_graph",
+      "status": "assumed",
+      "rationale": "the adjustment set is read off this declared DAG",
+      "licenses": "treating {age, sex, stage} as sufficient adjustment for the adherence effect",
+      "tested": true,
+      "verdict": "stable"
     }
   ],
   "estimate": {
@@ -333,6 +341,51 @@
         "rr_ci_high": 0.8610930090187224,
         "benchmark": 1.25
       }
+    },
+    {
+      "test": "graph_check",
+      "invariance": "causal_graph",
+      "verdict": "stable",
+      "variants": [],
+      "n_failed_refits": 0,
+      "reading": "every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph — Markov-equivalent graphs share these implications",
+      "implications": [
+        {
+          "claim": "stage _||_ age | {}",
+          "conditioning": [],
+          "partial_r": null,
+          "p_value": null,
+          "n": null,
+          "status": "not_testable"
+        },
+        {
+          "claim": "sex _||_ age | {}",
+          "conditioning": [],
+          "partial_r": 0.0412,
+          "p_value": 0.039,
+          "n": 2506,
+          "status": "consistent"
+        },
+        {
+          "claim": "sex _||_ stage | {}",
+          "conditioning": [],
+          "partial_r": null,
+          "p_value": null,
+          "n": null,
+          "status": "not_testable"
+        },
+        {
+          "claim": "adherence _||_ sex | {age, stage}",
+          "conditioning": [
+            "age",
+            "stage"
+          ],
+          "partial_r": -0.0379,
+          "p_value": 0.0579,
+          "n": 2506,
+          "status": "consistent"
+        }
+      ]
     }
   ],
   "decision": {
@@ -342,7 +395,8 @@
       "unit_permutation_within_cluster",
       "temporal_translation",
       "subgroup_transport",
-      "unobserved_confounding"
+      "unobserved_confounding",
+      "causal_graph"
     ],
     "exposed_surface": [],
     "broken_by": "cluster_holdout",
@@ -352,7 +406,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T11:27:58+0300",
+    "created": "2026-07-11T12:08:26+0300",
     "engine": "assesslite-python",
     "engine_version": "0.2.0",
     "platform": "Python 3.11.8",

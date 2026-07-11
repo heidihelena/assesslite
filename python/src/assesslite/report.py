@@ -89,6 +89,28 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("implications") is not None:
+            chip_of = {"consistent": "ok", "violated": "bad",
+                       "not_resolvable": "nr", "not_testable": "nr"}
+            irows = []
+            for im in t["implications"]:
+                if im["partial_r"] is None:
+                    val = "—"
+                else:
+                    pv = "NA" if im["p_value"] is None else f"{im['p_value']:.2g}"
+                    val = f"r = {im['partial_r']:.3f}, p = {pv}"
+                irows.append(
+                    f"<tr><td>{_esc(im['claim'])}</td><td>{val}</td>"
+                    f"<td><span class='chip {chip_of[im['status']]}'>{_esc(im['status'].replace('_', ' '))}</span></td></tr>")
+            body = ("<table><tr><th>implied independence</th><th>partial correlation</th>"
+                    "<th>outcome</th></tr>" + "\n".join(irows) + "</table>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{body}"
+                "<p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), body=body,
+                    reading=_esc(t["reading"])))
+            continue
         if t.get("sensitivity") is not None:
             sv = t["sensitivity"]
             e_ci = "1 (interval includes no effect)" if abs(sv["e_value_ci"] - 1) < 1e-9 else f"{sv['e_value_ci']:.2f}"

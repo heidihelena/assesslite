@@ -11,6 +11,7 @@ invariance_vocabulary <- function() {
     "temporal_translation",
     "subgroup_transport",
     "unobserved_confounding",
+    "causal_graph",
     "spatial_translation",
     "network_relabelling")
 }

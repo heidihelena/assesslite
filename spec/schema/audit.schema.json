@@ -99,6 +99,22 @@
               "benchmark": { "type": ["number", "null"] }
             }
           },
+          "implications": {
+            "type": "array",
+            "description": "present for a graph_check attack: the DAG's implied conditional independencies and their test outcomes",
+            "items": {
+              "type": "object",
+              "required": ["claim", "status"],
+              "properties": {
+                "claim": { "type": "string" },
+                "conditioning": { "type": "array", "items": { "type": "string" } },
+                "partial_r": { "type": ["number", "null"] },
+                "p_value": { "type": ["number", "null"] },
+                "n": { "type": ["integer", "null"] },
+                "status": { "enum": ["consistent", "violated", "not_resolvable", "not_testable"] }
+              }
+            }
+          },
           "reading": { "type": "string" }
         }
       }

@@ -27,7 +27,7 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <h1>Structural audit</h1>
 <p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage · unit: patient · coxph ·
  engine assesslite-python 0.2.0 · core spec 0.1 ·
- 2026-07-11T11:27:58+0300 · data 2506 × 8,
+ 2026-07-11T12:08:26+0300 · data 2506 × 8,
  md5 93ca8ff36545</p>
 
 <h2>declared structure</h2>
@@ -43,7 +43,8 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <tr><td><strong>cluster exchangeability</strong><br><span class='meta'>assumed</span></td><td>hospitals follow the same national guideline; assumed provisionally so it can be attacked</td><td>one pooled effect across hospitals; transport to a hospital outside the sample</td><td><span class="chip bad">unstable</span></td></tr>
 <tr><td><strong>temporal translation</strong><br><span class='meta'>assumed</span></td><td>no major guideline revision inside the 2016-2025 window</td><td>pooling all diagnosis years; applying the estimate forward</td><td><span class="chip ok">stable</span></td></tr>
 <tr><td><strong>subgroup transport</strong><br><span class='meta'>assumed</span></td><td>adherence is expected to act through the same pathways at every stage</td><td>one pooled effect rather than stage-specific effects</td><td><span class="chip ok">stable</span></td></tr>
-<tr><td><strong>unobserved confounding</strong><br><span class='meta'>assumed</span></td><td>age, sex and stage are adjusted, but comorbidity and performance status are not measured</td><td>reading the adjusted hazard ratio as the causal effect of adherence</td><td><span class="chip ok">stable</span></td></tr></table>
+<tr><td><strong>unobserved confounding</strong><br><span class='meta'>assumed</span></td><td>age, sex and stage are adjusted, but comorbidity and performance status are not measured</td><td>reading the adjusted hazard ratio as the causal effect of adherence</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>causal graph</strong><br><span class='meta'>assumed</span></td><td>the adjustment set is read off this declared DAG</td><td>treating {age, sex, stage} as sufficient adjustment for the adherence effect</td><td><span class="chip ok">stable</span></td></tr></table>
 
 <h2>full-sample estimate</h2>
 <table><tr><th>scale</th><th>estimate</th><th>95% interval</th><th>n</th></tr>
@@ -73,10 +74,14 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <tr><td>stage = III</td><td>-0.333</td><td>[-0.541, -0.125]</td><td>755</td></tr>
 <tr><td>stage = IV</td><td>-0.227</td><td>[-0.404, -0.051]</td><td>733</td></tr></table><p class='reading'>the largest variant shift was 0.7 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.26, so the claim of subgroup transport holds up under this test</p>
 <h2>attack: confounding sensitivity <span class="chip ok">stable</span></h2><p class='meta'>probes: unobserved confounding</p><table><tr><th>quantity</th><th>value</th></tr><tr><td>ratio estimate</td><td>0.76 [0.68, 0.86]</td></tr><tr><td>E-value (point estimate)</td><td>1.94</td></tr><tr><td>E-value (interval limit nearest null)</td><td>1.59</td></tr><tr><td>plausible confounding benchmark</td><td>1.25</td></tr></table><p class='reading'>explaining the interval away would require unmeasured confounding of at least 1.59 on the risk-ratio scale, stronger than the declared plausible benchmark (1.25); the conclusion is robust to confounding at that benchmark (E-value for the point estimate 1.94) (E-value on the risk-ratio scale under the rare-outcome approximation for the hazard ratio)</p>
+<h2>attack: graph check <span class="chip ok">stable</span></h2><p class='meta'>probes: causal graph</p><table><tr><th>implied independence</th><th>partial correlation</th><th>outcome</th></tr><tr><td>stage _||_ age | {}</td><td>—</td><td><span class='chip nr'>not testable</span></td></tr>
+<tr><td>sex _||_ age | {}</td><td>r = 0.041, p = 0.039</td><td><span class='chip ok'>consistent</span></td></tr>
+<tr><td>sex _||_ stage | {}</td><td>—</td><td><span class='chip nr'>not testable</span></td></tr>
+<tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.038, p = 0.058</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph — Markov-equivalent graphs share these implications</p>
 
 <h2>decision</h2>
 <div class='decision abstain'><span class='status'>ABSTAIN</span>
-<p>the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; temporal translation; subgroup transport; unobserved confounding</p><p><strong>Broken by</strong>: cluster_holdout</p></div>
+<p>the assumed invariance cluster exchangeability did not hold up under the cluster_holdout attack; the pooling it licenses has no basis, so no pooled conclusion is reported</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; temporal translation; subgroup transport; unobserved confounding; causal graph</p><p><strong>Broken by</strong>: cluster_holdout</p></div>
 
 <h2>limitations text (draft)</h2>
 <div class='draft'>The analysis abstains from a pooled conclusion: the cluster_holdout attack showed that a relied-on invariance does not hold up, and the pooling it licenses has no basis in this data. Stability verdicts assess whether the conclusion survived the attacks that were run; they do not establish the truth of the assumptions. [Draft for the analyst to edit; generated by assesslite-python, core spec 0.1.]</div>
