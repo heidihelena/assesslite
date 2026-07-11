@@ -15,6 +15,7 @@ invariance_vocabulary <- function() {
     "adjustment_sufficiency",
     "positivity",
     "spatial_translation",
+    "spatial_independence",
     "network_relabelling")
 }
 

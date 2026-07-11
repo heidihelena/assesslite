@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 
 def _fingerprint(data: pd.DataFrame) -> dict:
@@ -53,6 +53,8 @@ def audit_as_list(assessment) -> dict:
             obj["overlap"] = t["overlap"]
         if t.get("scenarios") is not None:
             obj["scenarios"] = t["scenarios"]
+        if t.get("autocorrelation") is not None:
+            obj["autocorrelation"] = t["autocorrelation"]
         tests.append(obj)
 
     a = assessment.analysis

@@ -35,6 +35,7 @@ def target_invariance(assessment, test: str) -> str:
         "interference_check": "network_relabelling",
         "positivity_check": "positivity",
         "confounding_scenarios": "unobserved_confounding",
+        "spatial_autocorrelation": "spatial_independence",
     }[test]
 
 

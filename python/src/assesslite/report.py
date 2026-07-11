@@ -138,6 +138,23 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("autocorrelation") is not None:
+            ac = t["autocorrelation"]
+            fmtv = lambda v: "&mdash;" if v is None else f"{v:g}"
+            body = (
+                "<table>"
+                f"<tr><th>Moran's I (residuals)</th><td>{fmtv(ac['moran_i'])}</td></tr>"
+                f"<tr><td>expected under independence</td><td>{fmtv(ac['expected'])}</td></tr>"
+                f"<tr><td>z, p</td><td>{fmtv(ac['z'])}, {fmtv(ac['p_value'])}</td></tr>"
+                f"<tr><td>weights / residuals</td><td>{fmtv(ac['k'])}-nearest-neighbour / "
+                f"{ac['residual_type'] or '&mdash;'} (n = {fmtv(ac['n'])})</td></tr></table>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{body}"
+                "<p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), body=body,
+                    reading=_esc(t["reading"])))
+            continue
         if t.get("scenarios") is not None:
             import math as _m
             sc = t["scenarios"]

@@ -23,6 +23,7 @@ true; the ledger records it so it can be attacked.
 | `adjustment_sufficiency` | none — this is the assumption that the covariates adjusted identify the effect (satisfy the backdoor criterion in the declared graph) | reading the adjusted estimate as the causal effect |
 | `positivity` | none — this is the assumption that every unit could plausibly have either exposure level given its covariates (overlap) | reading a pooled effect over the whole covariate space; attacked by `positivity_check` (propensity overlap + trimming) |
 | `spatial_translation` | translate the spatial field | pooling one mechanism across locations; attacked by `spatial_holdout` (leave-one-spatial-block-out) |
+| `spatial_independence` | none -- the assumption that outcomes are independent across space given the model | i.i.d.-style intervals on spatial data; attacked by `spatial_autocorrelation` (Moran's I on model residuals) |
 | `network_relabelling` | relabel nodes preserving graph structure | treating units as non-interfering (SUTVA); attacked by `interference_check` (does the outcome depend on neighbours' exposure?) |
 
 `unobserved_confounding` is different in kind from the transformation invariances above:

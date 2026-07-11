@@ -13,7 +13,8 @@ test_invariance(
   outcome_node = NULL,
   spatial_k = 3,
   tip_ratio = NULL,
-  confounder_prevalence = 0.2
+  confounder_prevalence = 0.2,
+  spatial_knn = 8
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ or NULL for the null (default NULL).}
 
 \item{confounder_prevalence}{assumed confounder prevalence for
 confounding_scenarios (default 0.2).}
+
+\item{spatial_knn}{neighbours for the spatial_autocorrelation weight matrix (default 8).}
 }
 \value{
 the audit with the requested attacks recorded and ledger verdicts updated.

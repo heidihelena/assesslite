@@ -213,6 +213,32 @@ def test_edges_require_unique_unit_id_and_interference_needs_network():
         a.test(["interference_check"])
 
 
+def test_spatial_autocorrelation_flags_smooth_field():
+    rng = np.random.default_rng(1); n = 900
+    lon = rng.uniform(0, 10, n); lat = rng.uniform(0, 10, n); x = rng.binomial(1, 0.5, n)
+    field = np.sin(lon / 1.6) + np.cos(lat / 1.6)
+    d1 = pd.DataFrame({"y": rng.normal(0.5 * x + 1.5 * field, 1), "x": x, "lon": lon, "lat": lat})
+    a1 = StructuralAudit(d1, outcome="y", exposure="x", coords=("lon", "lat"))
+    a1.assume("spatial_independence", "independent given model", "iid intervals")
+    a1.test(["spatial_autocorrelation"])
+    assert a1.tests["spatial_autocorrelation"]["verdict"] == "unstable"
+    assert a1.tests["spatial_autocorrelation"]["autocorrelation"]["moran_i"] > 0.1
+
+    d2 = pd.DataFrame({"y": rng.normal(0.5 * x, 1, n), "x": x, "lon": lon, "lat": lat})
+    a2 = StructuralAudit(d2, outcome="y", exposure="x", coords=("lon", "lat"))
+    a2.assume("spatial_independence", "i", "i").test(["spatial_autocorrelation"])
+    assert a2.tests["spatial_autocorrelation"]["verdict"] == "stable"
+
+    te = rng.exponential(1 / (0.06 * np.exp(0.4 * x + 1.2 * field))); tc = rng.uniform(1, 8, n)
+    d3 = pd.DataFrame({"time": np.minimum(te, tc), "status": (te <= tc).astype(int),
+                       "x": x, "lon": lon, "lat": lat})
+    a3 = StructuralAudit(d3, outcome=("time", "status"), exposure="x", coords=("lon", "lat"))
+    a3.assume("spatial_independence", "i", "i").test(["spatial_autocorrelation"])
+    r3 = a3.tests["spatial_autocorrelation"]
+    assert r3["autocorrelation"]["residual_type"] == "martingale"
+    assert r3["verdict"] == "unstable"
+
+
 def test_spatial_holdout_flags_regional_heterogeneity():
     rng = np.random.default_rng(2); n = 3000
     lon = rng.uniform(0, 10, n); lat = rng.uniform(0, 10, n); x = rng.binomial(1, 0.5, n)

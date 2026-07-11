@@ -119,6 +119,20 @@
               }
             }
           },
+          "autocorrelation": {
+            "type": "object",
+            "description": "present for a spatial_autocorrelation attack: Moran's I on model residuals",
+            "properties": {
+              "moran_i": { "type": ["number", "null"] },
+              "expected": { "type": ["number", "null"] },
+              "se": { "type": ["number", "null"] },
+              "z": { "type": ["number", "null"] },
+              "p_value": { "type": ["number", "null"] },
+              "k": { "type": ["integer", "null"] },
+              "n": { "type": ["integer", "null"] },
+              "residual_type": { "type": ["string", "null"] }
+            }
+          },
           "scenarios": {
             "type": "object",
             "description": "present for a confounding_scenarios attack: the bias-analysis array",

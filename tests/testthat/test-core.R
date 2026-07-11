@@ -157,6 +157,33 @@ test_that("positivity_check works with custom (non-integer) row names", {
   expect_true(a$tests$positivity_check$verdict %in% c("stable", "unstable", "not_resolvable"))
 })
 
+test_that("spatial_autocorrelation flags a smooth unmodelled field and passes independence", {
+  set.seed(1); n <- 900
+  lon <- runif(n, 0, 10); lat <- runif(n, 0, 10); x <- rbinom(n, 1, 0.5)
+  field <- sin(lon / 1.6) + cos(lat / 1.6)
+  d1 <- data.frame(y = rnorm(n, 0.5 * x + 1.5 * field, 1), x = x, lon = lon, lat = lat)
+  a1 <- structural_audit(d1, outcome = "y", exposure = "x", coords = c("lon", "lat"))
+  a1 <- assume_invariance(a1, "spatial_independence", "independent given model", "iid intervals")
+  a1 <- test_invariance(a1, tests = "spatial_autocorrelation")
+  expect_equal(a1$tests$spatial_autocorrelation$verdict, "unstable")
+  expect_true(a1$tests$spatial_autocorrelation$autocorrelation$moran_i > 0.1)
+
+  d2 <- data.frame(y = rnorm(n, 0.5 * x, 1), x = x, lon = lon, lat = lat)
+  a2 <- structural_audit(d2, outcome = "y", exposure = "x", coords = c("lon", "lat"))
+  a2 <- assume_invariance(a2, "spatial_independence", "i", "i")
+  a2 <- test_invariance(a2, tests = "spatial_autocorrelation")
+  expect_equal(a2$tests$spatial_autocorrelation$verdict, "stable")
+
+  # Cox path uses martingale residuals
+  te <- rexp(n, 0.06 * exp(0.4 * x + 1.2 * field)); tc <- runif(n, 1, 8)
+  d3 <- data.frame(time = pmin(te, tc), status = as.integer(te <= tc), x = x, lon = lon, lat = lat)
+  a3 <- structural_audit(d3, outcome = c("time", "status"), exposure = "x", coords = c("lon", "lat"))
+  a3 <- assume_invariance(a3, "spatial_independence", "i", "i")
+  a3 <- test_invariance(a3, tests = "spatial_autocorrelation")
+  expect_equal(a3$tests$spatial_autocorrelation$autocorrelation$residual_type, "martingale")
+  expect_equal(a3$tests$spatial_autocorrelation$verdict, "unstable")
+})
+
 test_that("spatial_holdout flags regional heterogeneity and passes a stationary field", {
   set.seed(2); n <- 3000
   lon <- runif(n, 0, 10); lat <- runif(n, 0, 10); x <- rbinom(n, 1, 0.5)

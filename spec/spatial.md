@@ -22,3 +22,27 @@ larger `k` gives finer spatial resolution but noisier per-block refits. As with 
 this is a leave-one-region-out test of pooling, not a model of the spatial process itself; a
 spatial-process model (e.g. a Gaussian-random-field mechanism in the sense of the paper) is a
 later addition.
+
+## Spatial autocorrelation (v0.4 addition)
+
+`spatial_holdout` asks whether the mechanism is the same across regions. The
+`spatial_autocorrelation` attack asks the complementary question: are observations
+spatially **independent** given the model? It attacks the `spatial_independence`
+invariance — the assumption licensing i.i.d.-style intervals on spatial data. This is the
+spatial-process (random-field) concern made operational: correlated residuals mean nearby
+units share unmodelled structure, the effective sample size is smaller than n, and the
+pooled interval overstates precision.
+
+Procedure: fit the declared outcome model and take its residuals — **martingale** residuals
+for Cox (Breslow baseline hazard), **response** residuals (y − μ) for GLMs — then compute
+**Moran's I** over a row-standardised k-nearest-neighbour weight matrix (default k = 8,
+Euclidean distance on the declared coordinates), with mean and variance under the normality
+assumption (Cliff & Ord), so the test is deterministic given the data.
+
+Verdict rule (three-way): `unstable` if p < 0.05 and |I| ≥ `i_floor` (default 0.1);
+else `not_resolvable` if the smallest resolvable I at this n (1.96 × se) exceeds the floor;
+else `stable`. The `autocorrelation` block records I, its expectation and se, z, p, k, n,
+and the residual type. The k, floor, and normality approximation are declared assessment
+heuristics of spec v0.4. Fitting an explicit spatial-process (Gaussian-random-field)
+mechanism model remains future work; this attack is the diagnostic that tells you whether
+you need one.
