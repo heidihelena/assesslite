@@ -152,6 +152,18 @@ Archived on Zenodo. Cite the concept DOI (always resolves to the latest version)
 Version 0.1.0 is `10.5281/zenodo.21306425`. See `CITATION.cff` for machine-readable
 metadata (GitHub's "Cite this repository" uses it).
 
+## Acknowledgement
+
+AssessLite's assumptions-first framing was sparked by **Weinstein & Blei, "Geometric Causal
+Models"** ([arXiv:2607.05153](https://arxiv.org/abs/2607.05153), 2026). Their central point —
+that generalisation from dependent data requires an explicit invariance assumption, and that the
+substantive scientific question is *which* invariances may legitimately be imposed — is the idea
+this toolkit is built to serve. Geometric causal models describe which causal structure permits
+generalisation; AssessLite is the auditing layer that makes the analyst's invariance and
+structural assumptions explicit, attacks them, and records which conclusions survive. The
+mapping onto specific transformation groups, the three-way verdicts, the abstention layer, and
+the graph and sensitivity checks are AssessLite's own; the framing debt is to that paper.
+
 ## License
 
 Apache License 2.0.

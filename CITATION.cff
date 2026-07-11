@@ -25,3 +25,17 @@ keywords:
   - structural assumptions
   - epidemiology
   - reproducibility
+references:
+  - type: article
+    title: "Geometric Causal Models"
+    authors:
+      - family-names: "Weinstein"
+        given-names: "Eli N."
+      - family-names: "Blei"
+        given-names: "David M."
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2607.05153"
+    url: "https://arxiv.org/abs/2607.05153"
+    notes: "Framing inspiration: generalisation from dependent data requires an explicit invariance assumption."
