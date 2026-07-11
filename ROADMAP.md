@@ -35,9 +35,16 @@ of an audit file is a `spec/` change and bumps the spec version.
   records carry a `sensitivity` block that validates against the shared schema. This is a
   first-class sensitivity attack rather than a `sensemakr`/`tipr` wrapper, which keeps the
   dependency footprint at numpy/pandas and base R.
-- **DAG implications** via `dagitty`: derive the adjustment set from a declared graph,
-  list testable conditional-independence implications, and flag when the fitted
-  adjustment set disagrees with the declared one. Feeds the ledger.
+- **DAG implications** — **done in part (v0.2.0).** New `causal_graph` invariance attacked by
+  `graph_check`: the analyst declares a DAG (`declare_graph`), the engine derives the implied
+  conditional independencies (ordered local Markov) and tests each against the data by partial
+  correlation, returning a three-way verdict per implication and overall. Self-contained (no
+  `dagitty`), both R and Python; audit records carry an `implications` block that validates
+  against the shared schema. Spec: `spec/graph/graph-check.md`. Correctly leaves colliders
+  unconditioned and skips multi-level-categorical endpoints as not-testable rather than
+  mis-testing them. Still to add: deriving the minimal adjustment set from the graph and
+  flagging when it disagrees with the covariates actually adjusted (the `dagitty` adjustment-set
+  half); a non-linear conditional-independence test beyond partial correlation.
 - **Simulation-based violation** (spec `simulated_violation`): parametrically inject a
   declared violation at increasing strength, record where the estimate crosses the
   decision threshold. This is the direct estimator-failure map.

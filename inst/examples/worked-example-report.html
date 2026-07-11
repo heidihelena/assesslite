@@ -25,7 +25,7 @@
            font-size: .9rem; color: var(--ink); }
   </style></head><body><main>
 <h1>Structural audit</h1>
-<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage <U+00B7> unit: patient <U+00B7> coxph <U+00B7> engine assesslite 0.2.0 <U+00B7> core spec 0.1 <U+00B7> 2026-07-11T11:26:12+0300 <U+00B7>
+<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage <U+00B7> unit: patient <U+00B7> coxph <U+00B7> engine assesslite 0.2.0 <U+00B7> core spec 0.1 <U+00B7> 2026-07-11T12:46:27+0300 <U+00B7>
  data 2129 <U+00D7> 8, md5 5e8f3eacf7df</p>
 
 <h2>declared structure</h2>
@@ -41,7 +41,8 @@
 <tr><td><strong>cluster exchangeability</strong><br><span class='meta'>assumed</span></td><td>hospitals follow the same national guideline; assumed provisionally so it can be attacked</td><td>one pooled effect across hospitals; transport to a hospital outside the sample</td><td><span class="chip ok">stable</span></td></tr>
 <tr><td><strong>temporal translation</strong><br><span class='meta'>assumed</span></td><td>no major guideline revision inside the 2016-2025 window</td><td>pooling all diagnosis years; applying the estimate forward</td><td><span class="chip ok">stable</span></td></tr>
 <tr><td><strong>subgroup transport</strong><br><span class='meta'>assumed</span></td><td>adherence is expected to act through the same pathways at every stage</td><td>one pooled effect rather than stage-specific effects</td><td><span class="chip nr">not resolvable at this n</span></td></tr>
-<tr><td><strong>unobserved confounding</strong><br><span class='meta'>assumed</span></td><td>age, sex and stage are adjusted, but comorbidity and performance status are not measured</td><td>reading the adjusted hazard ratio as the causal effect of adherence</td><td><span class="chip ok">stable</span></td></tr></table>
+<tr><td><strong>unobserved confounding</strong><br><span class='meta'>assumed</span></td><td>age, sex and stage are adjusted, but comorbidity and performance status are not measured</td><td>reading the adjusted hazard ratio as the causal effect of adherence</td><td><span class="chip ok">stable</span></td></tr>
+<tr><td><strong>causal graph</strong><br><span class='meta'>assumed</span></td><td>the adjustment set is read off this declared DAG</td><td>treating {age, sex, stage} as sufficient adjustment for the adherence effect</td><td><span class="chip ok">stable</span></td></tr></table>
 
 <h2>full-sample estimate</h2>
 <table><tr><th>scale</th><th>estimate</th><th>95% interval</th><th>n</th></tr>
@@ -87,10 +88,14 @@
          <tr><td>E-value (point estimate)</td><td>1.87</td></tr>
          <tr><td>E-value (interval limit nearest null)</td><td>1.51</td></tr>
          <tr><td>plausible confounding benchmark</td><td>1.25</td></tr></table><p class='reading'>explaining the interval away would require unmeasured confounding of at least 1.51 on the risk-ratio scale, stronger than the declared plausible benchmark (1.25); the conclusion is robust to confounding at that benchmark (E-value for the point estimate 1.87) (E-value on the risk-ratio scale under the rare-outcome approximation for the hazard ratio)</p>
+<h2>attack: graph check <span class="chip ok">stable</span></h2><p class='meta'>probes: causal graph</p><table><tr><th>implied independence</th><th>partial correlation</th><th>outcome</th></tr><tr><td>stage _||_ age | {}</td><td><U+2014></td><td><span class='chip nr'>not testable</span></td></tr>
+<tr><td>sex _||_ age | {}</td><td>r = 0.006, p = 0.78</td><td><span class='chip ok'>consistent</span></td></tr>
+<tr><td>sex _||_ stage | {}</td><td><U+2014></td><td><span class='chip nr'>not testable</span></td></tr>
+<tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.007, p = 0.74</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph &lt;U+2014&gt; Markov-equivalent graphs share these implications</p>
 
 <h2>decision</h2>
 <div class='decision conditional'><span class='status'>CONDITIONAL</span>
-<p>the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; cluster exchangeability; temporal translation; unobserved confounding</p><p><strong>Exposed surface</strong> (relied on, not settled): subgroup transport</p></div>
+<p>the conclusion stands conditional on: subgroup transport (untested or not resolvable at this n)</p><p><strong>Load-bearing</strong> (attacked, stable): unit permutation within cluster; cluster exchangeability; temporal translation; unobserved confounding; causal graph</p><p><strong>Exposed surface</strong> (relied on, not settled): subgroup transport</p></div>
 
 <h2>limitations text (draft)</h2>
 <div class='draft'>The following invariance assumptions were relied on but could not be assessed, or were not resolvable at this sample size: subgroup transport. Conclusions are conditional on these claims holding. Stability verdicts assess whether the conclusion survived the attacks that were run; they do not establish the truth of the assumptions. [Draft for the analyst to edit; generated by assesslite, core spec 0.1.]</div>

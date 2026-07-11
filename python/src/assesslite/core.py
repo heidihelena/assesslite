@@ -12,6 +12,7 @@ import pandas as pd
 
 from . import decision as _decision
 from . import export as _export
+from . import graph as _graph
 from . import report as _report
 from . import sensitivity as _sens
 from . import transformations as _tf
@@ -24,12 +25,13 @@ INVARIANCE_VOCABULARY = (
     "temporal_translation",
     "subgroup_transport",
     "unobserved_confounding",
+    "causal_graph",
     "spatial_translation",
     "network_relabelling",
 )
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
-_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity",)
+_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check")
 
 
 def invariance_vocabulary() -> tuple:
@@ -80,6 +82,7 @@ class StructuralAudit:
         self.ledger: list[dict] = []
         self.tests: dict[str, dict] = {}
         self.decision: dict | None = None
+        self.graph: dict | None = None
 
         self.estimate = fit_estimate(self.analysis, self.data)
         if self.estimate is None:
@@ -101,6 +104,17 @@ class StructuralAudit:
             raise ValueError(f"'{invariance}' is already in the ledger; one entry per claim")
         self.ledger.append({"invariance": invariance, "status": status, "rationale": rationale,
                             "licenses": licenses, "tested": False, "verdict": None})
+        return self
+
+    def declare_graph(self, edges):
+        """Declare a causal DAG (edges like 'age -> adherence') for the graph_check attack."""
+        g = _graph.parse_graph(edges)
+        missing = [v for v in g["nodes"] if v not in self.data.columns]
+        if missing:
+            import warnings
+            warnings.warn("graph nodes not found in the data (implications involving them will be "
+                          "skipped): " + ", ".join(missing))
+        self.graph = g
         return self
 
     def assume(self, invariance, rationale, licenses):
@@ -140,6 +154,7 @@ class StructuralAudit:
             "temporal_split": lambda: _tf.test_temporal_split(self),
             "subgroup_stability": lambda: _tf.test_subgroup_stability(self),
             "confounding_sensitivity": lambda: _sens.test_confounding_sensitivity(self, confounding_benchmark),
+            "graph_check": lambda: _graph.test_graph_check(self),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

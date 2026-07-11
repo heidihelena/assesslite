@@ -19,6 +19,9 @@ audit_as_list <- function(audit) {
                 reading = t$reading)
     if (!is.null(t$metrics)) obj$metrics <- t$metrics
     if (!is.null(t$sensitivity)) obj$sensitivity <- t$sensitivity
+    if (!is.null(t$implications)) obj$implications <- lapply(t$implications, function(im) {
+      im$conditioning <- I(as.character(im$conditioning)); im
+    })
     obj
   }))
 
@@ -58,6 +61,7 @@ audit_as_list <- function(audit) {
 #' Write the audit to a JSON file conforming to the core audit schema
 write_audit <- function(audit, path) {
   jsonlite::write_json(audit_as_list(audit), path,
-                       auto_unbox = TRUE, pretty = TRUE, digits = 10, null = "null")
+                       auto_unbox = TRUE, pretty = TRUE, digits = 10,
+                       null = "null", na = "null")
   invisible(path)
 }

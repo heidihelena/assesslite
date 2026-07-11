@@ -43,6 +43,8 @@ def audit_as_list(assessment) -> dict:
             obj["metrics"] = t["metrics"]
         if t.get("sensitivity") is not None:
             obj["sensitivity"] = t["sensitivity"]
+        if t.get("implications") is not None:
+            obj["implications"] = t["implications"]
         tests.append(obj)
 
     a = assessment.analysis

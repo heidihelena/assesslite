@@ -114,6 +114,32 @@ test_that("confounding_sensitivity is undefined on a linear scale", {
   expect_error(test_confounding_sensitivity(a), "ratio-scale")
 })
 
+test_that("graph_check detects consistent and violated DAG implications", {
+  set.seed(1); n <- 1500
+  a <- rnorm(n); b <- rnorm(n); cc <- a + b + rnorm(n)
+  d <- data.frame(a = a, b = b, cc = cc, y = rbinom(n, 1, plogis(a)))
+  au <- structural_audit(d, outcome = "y", exposure = "a")
+  au <- declare_graph(au, c("a -> cc", "b -> cc", "a -> y"))
+  au <- assume_invariance(au, "causal_graph", "collider DAG", "adjustment from graph")
+  au <- test_invariance(au, tests = "graph_check")
+  expect_equal(au$tests$graph_check$verdict, "stable")  # a,b independent -> collider parents test independent
+
+  # correlate the two parents: a _||_ b | {} must now be violated
+  set.seed(2); a2 <- rnorm(n); b2 <- 0.6 * a2 + 0.8 * rnorm(n); c2 <- a2 + b2 + rnorm(n)
+  d2 <- data.frame(a = a2, b = b2, cc = c2, y = rbinom(n, 1, plogis(a2)))
+  au2 <- structural_audit(d2, outcome = "y", exposure = "a")
+  au2 <- declare_graph(au2, c("a -> cc", "b -> cc", "a -> y"))
+  au2 <- test_invariance(au2, tests = "graph_check")
+  expect_equal(au2$tests$graph_check$verdict, "unstable")
+})
+
+test_that("declare_graph rejects a cyclic graph and graph_check needs a declared graph", {
+  d <- data.frame(a = rnorm(50), b = rnorm(50), y = rbinom(50, 1, 0.5))
+  au <- structural_audit(d, outcome = "y", exposure = "a")
+  expect_error(declare_graph(au, c("a -> b", "b -> a")), "acyclic")
+  expect_error(test_graph_check(au), "declared graph")
+})
+
 test_that("audit export conforms to the schema shape and report renders", {
   a <- open_audit(simulate_cohort())
   a <- assume_invariance(a, "cluster_exchangeability", "same guideline", "pooling")

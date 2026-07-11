@@ -77,6 +77,21 @@ render_report <- function(audit, path) {
   }, character(1)), collapse = "\n")
 
   test_blocks <- paste0(vapply(audit$tests, function(t) {
+    if (!is.null(t$implications)) {
+      chip_of <- c(consistent = "ok", violated = "bad",
+                   not_resolvable = "nr", not_testable = "nr")
+      rows <- paste0(vapply(t$implications, function(im) {
+        val <- if (is.na(im$partial_r)) "—"
+               else sprintf("r = %.3f, p = %s", im$partial_r,
+                            if (is.na(im$p_value)) "NA" else formatC(im$p_value, format = "g", digits = 2))
+        sprintf("<tr><td>%s</td><td>%s</td><td><span class='chip %s'>%s</span></td></tr>",
+                esc(im$claim), val, chip_of[[im$status]], esc(gsub("_", " ", im$status)))
+      }, character(1)), collapse = "\n")
+      body <- sprintf("<table><tr><th>implied independence</th><th>partial correlation</th><th>outcome</th></tr>%s</table>", rows)
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
+    }
     if (!is.null(t$sensitivity)) {
       s <- t$sensitivity
       body <- sprintf(

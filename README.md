@@ -117,13 +117,20 @@ The **Python** interface is built to the same spec (pure numpy/pandas; Cox repro
 `coxph` Breslow fit exactly) with a pytest suite that validates its audit records against the
 shared schema.
 
-**v0.2.0** adds `confounding_sensitivity` — an E-value attack (VanderWeele & Ding) on a new
-`unobserved_confounding` invariance: how strong an unmeasured confounder would have to be to
-move the interval to no effect. Ratio-scale estimators (Cox HR, logistic OR); folds into the
-same three-way verdicts and decision rules. See `spec/stability/sensitivity.md`.
+**v0.2.0** adds two attacks:
+- `confounding_sensitivity` — an E-value attack (VanderWeele & Ding) on a new
+  `unobserved_confounding` invariance: how strong an unmeasured confounder would have to be to
+  move the interval to no effect (`spec/stability/sensitivity.md`).
+- `graph_check` — declare a causal DAG with `declare_graph()`, and the engine tests the
+  conditional independencies the graph implies against the data (partial correlation),
+  attacking a new `causal_graph` invariance (`spec/graph/graph-check.md`). Self-contained, no
+  `dagitty` dependency.
 
-Not yet built: DAG implications (dagitty), simulation-based violation testing,
-spatial/network transformation groups, and the assumption lattice view.
+Both fold into the same three-way verdicts and decision rules.
+
+Not yet built: the DAG adjustment-set half (deriving and checking the minimal adjustment set),
+simulation-based violation testing, spatial/network transformation groups, and the assumption
+lattice view.
 
 ## What this is not
 

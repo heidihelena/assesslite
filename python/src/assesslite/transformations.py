@@ -29,6 +29,7 @@ def target_invariance(assessment, test: str) -> str:
         "temporal_split": "temporal_translation",
         "subgroup_stability": "subgroup_transport",
         "confounding_sensitivity": "unobserved_confounding",
+        "graph_check": "causal_graph",
     }[test]
 
 

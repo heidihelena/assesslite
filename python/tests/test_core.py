@@ -156,6 +156,42 @@ def test_evalue_matches_published_and_confounding_sensitivity_runs():
                - evalue_from_ratio(res["sensitivity"]["rr_point"])) < 1e-9
 
 
+def _collider(n=1500, correlate=False, seed=1):
+    rng = np.random.default_rng(seed)
+    a = rng.normal(size=n)
+    b = 0.6 * a + 0.8 * rng.normal(size=n) if correlate else rng.normal(size=n)
+    cc = a + b + rng.normal(size=n)
+    return pd.DataFrame({"a": a, "b": b, "cc": cc, "y": rng.binomial(1, 1 / (1 + np.exp(-a)))})
+
+
+def test_graph_check_detects_consistent_and_violated():
+    au = StructuralAudit(_collider(correlate=False), outcome="y", exposure="a")
+    au.declare_graph(["a -> cc", "b -> cc", "a -> y"])
+    au.assume("causal_graph", "collider DAG", "adjustment from graph")
+    au.test(["graph_check"])
+    assert au.tests["graph_check"]["verdict"] == "stable"
+
+    au2 = StructuralAudit(_collider(correlate=True, seed=2), outcome="y", exposure="a")
+    au2.declare_graph(["a -> cc", "b -> cc", "a -> y"]).test(["graph_check"])
+    assert au2.tests["graph_check"]["verdict"] == "unstable"
+
+    # the graph_check audit (with an implications block) validates against the shared schema
+    import jsonschema
+    au.decide()
+    jsonschema.validate(au.export_audit(), json.loads(SCHEMA.read_text()))
+
+
+def test_declare_graph_rejects_cycle_and_graph_check_needs_graph():
+    d = pd.DataFrame({"a": np.random.default_rng(0).normal(size=50),
+                      "b": np.random.default_rng(1).normal(size=50),
+                      "y": np.random.default_rng(2).binomial(1, 0.5, 50)})
+    a = StructuralAudit(d, outcome="y", exposure="a")
+    with pytest.raises(ValueError, match="acyclic"):
+        a.declare_graph(["a -> b", "b -> a"])
+    with pytest.raises(ValueError, match="declared graph"):
+        a.test(["graph_check"])
+
+
 def test_confounding_sensitivity_undefined_on_linear_scale():
     d = pd.DataFrame({"y": np.random.default_rng(0).normal(0, 1, 300),
                       "x": np.random.default_rng(1).binomial(1, 0.5, 300)})
