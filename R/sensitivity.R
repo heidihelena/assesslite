@@ -33,7 +33,7 @@ test_confounding_sensitivity <- function(audit, benchmark = 1.25) {
     not_resolvable = paste0(
       "the confidence interval already includes no effect on the ratio scale, so the unmeasured ",
       "confounding needed to explain the result away is not defined (E-value for the interval = 1); ",
-      "this attack is not resolvable — the effect itself is not established"),
+      "this attack is not resolvable -- the effect itself is not established"),
     unstable = sprintf(paste0(
       "an unmeasured confounder associated with both exposure and outcome by a risk ratio of about ",
       "%.2f would move the interval to include no effect; that is no stronger than the declared ",

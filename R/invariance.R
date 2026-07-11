@@ -23,11 +23,23 @@ add_ledger_entry <- function(audit, invariance, status, rationale, licenses) {
 }
 
 #' Assume an invariance: the analysis relies on it and it should be attacked
+#'
+#' @param audit a structural_audit object.
+#' @param invariance a name from `invariance_vocabulary()`.
+#' @param rationale why the claim is scientifically defensible here.
+#' @param licenses what inferential step the claim buys (pooling, transport, ...).
+#' @return the audit with the ledger entry added.
 assume_invariance <- function(audit, invariance, rationale, licenses) {
   add_ledger_entry(audit, invariance, "assumed", rationale, licenses)
 }
 
 #' Reject an invariance: the analyst asserts it does not hold here
+#'
+#' @param audit a structural_audit object.
+#' @param invariance a name from `invariance_vocabulary()`.
+#' @param rationale why the claim is indefensible here.
+#' @param licenses what the rejection removes from scope.
+#' @return the audit with the ledger entry added.
 reject_invariance <- function(audit, invariance, rationale, licenses) {
   add_ledger_entry(audit, invariance, "rejected", rationale, licenses)
 }

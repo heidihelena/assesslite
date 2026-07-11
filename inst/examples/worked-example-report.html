@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset='utf-8'>
-<title>structural audit <U+2014> conditional hazard ratio for guideline adherence, adjusted for age, sex, stage</title><style>
+<title>structural audit &mdash; conditional hazard ratio for guideline adherence, adjusted for age, sex, stage</title><style>
   :root { --ink:#1a2330; --muted:#5b6673; --line:#d9dde3; --bg:#fafaf8; --card:#ffffff;
           --accent:#33586e; --ok:#2e6e4e; --bad:#a33d2e; --nr:#8a6d1f; }
   body { font: 15px/1.55 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
@@ -25,8 +25,8 @@
            font-size: .9rem; color: var(--ink); }
   </style></head><body><main>
 <h1>Structural audit</h1>
-<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage <U+00B7> unit: patient <U+00B7> coxph <U+00B7> engine assesslite 0.3.0 <U+00B7> core spec 0.1 <U+00B7> 2026-07-11T15:15:16+0300 <U+00B7>
- data 2129 <U+00D7> 8, md5 5e8f3eacf7df</p>
+<p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage &middot; unit: patient &middot; coxph &middot; engine assesslite 0.3.0 &middot; core spec 0.1 &middot; 2026-07-11T18:52:16+0300 &middot;
+ data 2129 &times; 8, md5 5e8f3eacf7df</p>
 
 <h2>declared structure</h2>
 <table>
@@ -89,10 +89,10 @@
          <tr><td>E-value (point estimate)</td><td>1.87</td></tr>
          <tr><td>E-value (interval limit nearest null)</td><td>1.51</td></tr>
          <tr><td>plausible confounding benchmark</td><td>1.25</td></tr></table><p class='reading'>explaining the interval away would require unmeasured confounding of at least 1.51 on the risk-ratio scale, stronger than the declared plausible benchmark (1.25); the conclusion is robust to confounding at that benchmark (E-value for the point estimate 1.87) (E-value on the risk-ratio scale under the rare-outcome approximation for the hazard ratio)</p>
-<h2>attack: graph check <span class="chip ok">stable</span></h2><p class='meta'>probes: causal graph</p><table><tr><th>implied independence</th><th>partial correlation</th><th>outcome</th></tr><tr><td>stage _||_ age | {}</td><td><U+2014></td><td><span class='chip nr'>not testable</span></td></tr>
+<h2>attack: graph check <span class="chip ok">stable</span></h2><p class='meta'>probes: causal graph</p><table><tr><th>implied independence</th><th>partial correlation</th><th>outcome</th></tr><tr><td>stage _||_ age | {}</td><td>&mdash;</td><td><span class='chip nr'>not testable</span></td></tr>
 <tr><td>sex _||_ age | {}</td><td>r = 0.006, p = 0.78</td><td><span class='chip ok'>consistent</span></td></tr>
-<tr><td>sex _||_ stage | {}</td><td><U+2014></td><td><span class='chip nr'>not testable</span></td></tr>
-<tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.007, p = 0.74</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph &lt;U+2014&gt; Markov-equivalent graphs share these implications</p>
+<tr><td>sex _||_ stage | {}</td><td>&mdash;</td><td><span class='chip nr'>not testable</span></td></tr>
+<tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.007, p = 0.74</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph -- Markov-equivalent graphs share these implications</p>
 <h2>attack: adjustment check <span class="chip ok">stable</span></h2><p class='meta'>probes: adjustment sufficiency</p><table>
          <tr><th>exposure &rarr; outcome</th><td>adherence &rarr; status</td></tr>
          <tr><td>adjusted for</td><td>{age, sex, stage}</td></tr>

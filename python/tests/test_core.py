@@ -121,6 +121,16 @@ def test_export_conforms_to_schema_and_report_renders(tmp_path):
     assert "limitations text" in html
 
 
+def test_string_scalar_covariate_is_one_name_not_characters():
+    d = simulate_cohort()
+    a_str = StructuralAudit(d, outcome="y", exposure="x", covariates="age",
+                            cluster="hospital", subgroups="hospital")
+    assert a_str.analysis["covariates"] == ["age"]        # not ['a', 'g', 'e']
+    assert a_str.structure["subgroups"] == ["hospital"]
+    a_list = StructuralAudit(d, outcome="y", exposure="x", covariates=["age"], cluster="hospital")
+    assert abs(a_str.estimate["value"] - a_list.estimate["value"]) < 1e-9
+
+
 def test_vocabulary_matches_spec():
     assert "unit_permutation" in invariance_vocabulary()
     assert "spatial_translation" in invariance_vocabulary()

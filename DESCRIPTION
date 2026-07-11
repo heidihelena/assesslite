@@ -23,4 +23,4 @@ Encoding: UTF-8
 Depends: R (>= 4.1)
 Imports: jsonlite, stats, utils, tools
 Suggests: survival, testthat (>= 3.0.0)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

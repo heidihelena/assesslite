@@ -2,7 +2,7 @@
 # Attacks the spatial_translation invariance (the mechanism is the same across the
 # field) by leave-one-spatial-block-out: grid the coordinate space into k x k blocks
 # and refit with each block removed. A material shift means some region drives the
-# estimate — the mechanism is not spatially stationary.
+# estimate -- the mechanism is not spatially stationary.
 
 # assign each row to a k x k grid block from quantile bins of the two coordinates
 spatial_blocks <- function(x, y, k) {

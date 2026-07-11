@@ -146,6 +146,17 @@ test_that("edges require unit_id, uniqueness, and interference_check needs a net
   expect_error(test_invariance(a, tests = "interference_check"), "needs a network")
 })
 
+test_that("positivity_check works with custom (non-integer) row names", {
+  set.seed(1); n <- 800; age <- rnorm(n)
+  x <- rbinom(n, 1, plogis(0.3 * age)); y <- rbinom(n, 1, plogis(-0.6 * x + 0.3 * age))
+  d <- data.frame(y = y, x = x, age = age)
+  rownames(d) <- paste0("id", seq_len(n))          # custom row names
+  a <- structural_audit(d, outcome = "y", exposure = "x", covariates = "age")
+  a <- assume_invariance(a, "positivity", "overlap", "pooling")
+  a <- test_invariance(a, tests = "positivity_check")   # must not error on names(ps)
+  expect_true(a$tests$positivity_check$verdict %in% c("stable", "unstable", "not_resolvable"))
+})
+
 test_that("spatial_holdout flags regional heterogeneity and passes a stationary field", {
   set.seed(2); n <- 3000
   lon <- runif(n, 0, 10); lat <- runif(n, 0, 10); x <- rbinom(n, 1, 0.5)
