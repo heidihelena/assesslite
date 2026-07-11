@@ -13,6 +13,7 @@ import pandas as pd
 from . import decision as _decision
 from . import export as _export
 from . import graph as _graph
+from . import lattice as _lattice
 from . import report as _report
 from . import sensitivity as _sens
 from . import transformations as _tf
@@ -84,6 +85,7 @@ class StructuralAudit:
         self.tests: dict[str, dict] = {}
         self.decision: dict | None = None
         self.graph: dict | None = None
+        self.lattice: dict | None = None
 
         self.estimate = fit_estimate(self.analysis, self.data)
         if self.estimate is None:
@@ -176,6 +178,12 @@ class StructuralAudit:
     # --- decision, export, report --------------------------------------------
     def decide(self, abstain_if: dict | None = None):
         self.decision = _decision.decide(self, abstain_if)
+        return self
+
+    def assumption_lattice(self):
+        """Refit the exposure estimate under every pool-or-stratify choice over the
+        declared cluster/time axes; store the resulting lattice on the assessment."""
+        self.lattice = _lattice.build_lattice(self)
         return self
 
     def export_audit(self, path: str | None = None) -> dict:

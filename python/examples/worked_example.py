@@ -85,6 +85,7 @@ a.test(["unit_permutation", "cluster_holdout", "temporal_split",
         "subgroup_stability", "confounding_sensitivity", "graph_check", "adjustment_check"],
        seed=7, confounding_benchmark=1.25)
 a.decide(abstain_if={"estimate_sign_changes": True, "effect_crosses_threshold": None})
+a.assumption_lattice()
 print(a)
 
 out_dir = os.environ.get("AUDIT_OUT", ".")

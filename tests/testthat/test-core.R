@@ -133,6 +133,37 @@ test_that("graph_check detects consistent and violated DAG implications", {
   expect_equal(au2$tests$graph_check$verdict, "unstable")
 })
 
+test_that("assumption lattice refits under pooling choices and stays schema-valid", {
+  set.seed(3); n <- 1200
+  h <- sample(LETTERS[1:5], n, TRUE); yr <- sample(2018:2022, n, TRUE)
+  age <- rnorm(n, 65, 8); x <- rbinom(n, 1, plogis(-0.02 * (age - 65)))
+  lp <- -0.6 * x + 0.03 * (age - 65); te <- rexp(n, 0.05 * exp(lp)); tc <- runif(n, 1, 6)
+  d <- data.frame(time = pmin(te, tc), status = as.integer(te <= tc), x = x, age = age, h = h, yr = yr)
+  a <- structural_audit(d, outcome = c("time", "status"), exposure = "x", covariates = "age",
+                        cluster = "h", time = "yr")
+  a <- assume_invariance(a, "cluster_exchangeability", "p", "p")
+  a <- decide(test_invariance(a, tests = "cluster_holdout"))
+  a <- assumption_lattice(a)
+  expect_equal(length(a$lattice$nodes), 4)  # 2 axes -> 4 nodes
+  expect_true(a$lattice$verdict %in% c("stable", "unstable", "not_resolvable"))
+  # top node (pool both) should reproduce the main estimate
+  top <- Filter(function(nd) nd$n_pooled == 2, a$lattice$nodes)[[1]]
+  expect_equal(top$estimate, a$estimate$value, tolerance = 1e-6)
+  hf <- tempfile(fileext = ".html"); render_report(a, hf)
+  expect_true(any(grepl("assumption lattice", readLines(hf))))
+})
+
+test_that("stratified fit matches an unstratified fit when the stratum is noise", {
+  set.seed(9); n <- 1500
+  g <- sample(1:4, n, TRUE); x <- rbinom(n, 1, 0.5); age <- rnorm(n)
+  y <- rbinom(n, 1, plogis(-0.7 * x + 0.2 * age))
+  d <- data.frame(y = y, x = x, age = age, g = g)
+  a <- structural_audit(d, outcome = "y", exposure = "x", covariates = "age")
+  f0 <- fit_estimate(a, d)
+  fs <- fit_estimate(a, d, strata = "g")
+  expect_equal(sign(f0$value), sign(fs$value))  # a noise stratum does not flip the sign
+})
+
 test_that("backdoor / d-separation handles the textbook cases", {
   triangle <- list(C = character(0), X = "C", Y = c("C", "X"))
   expect_true(backdoor_valid(triangle, "X", "Y", "C"))

@@ -38,7 +38,7 @@ audit_as_list <- function(audit) {
   decision$load_bearing <- I(as.character(decision$load_bearing))
   decision$exposed_surface <- I(as.character(decision$exposed_surface))
 
-  list(
+  out <- list(
     spec_version = "0.1",
     analysis = analysis,
     structure = structure,
@@ -57,6 +57,8 @@ audit_as_list <- function(audit) {
       spec_version = "0.1",
       data_fingerprint = fingerprint)
   )
+  if (!is.null(audit$lattice)) out$lattice <- audit$lattice
+  out
 }
 
 #' Write the audit to a JSON file conforming to the core audit schema

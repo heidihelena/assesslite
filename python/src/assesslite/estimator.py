@@ -97,49 +97,13 @@ def _fit_glm(X, y, family, max_iter=50, tol=1e-8):
     return beta, np.sqrt(np.diag(cov))
 
 
-def _fit_cox(X, time, status, max_iter=50, tol=1e-8):
-    """Cox partial likelihood with Breslow tie handling, Newton-Raphson."""
+def _cox_grad_hess(X, time, status, beta):
+    """Breslow partial-likelihood gradient and Hessian for one stratum."""
     n, p = X.shape
     order = np.argsort(-time, kind="mergesort")  # descending time
     Xo, to, so = X[order], time[order], status[order]
-    beta = np.zeros(p)
-    for _ in range(max_iter):
-        theta = np.exp(np.clip(Xo @ beta, -30, 30))
-        grad = np.zeros(p)
-        hess = np.zeros((p, p))
-        S0 = 0.0
-        S1 = np.zeros(p)
-        S2 = np.zeros((p, p))
-        i = 0
-        while i < n:
-            j = i
-            # accumulate all rows tied at this time into the risk set first
-            while j < n and to[j] == to[i]:
-                xj = Xo[j]
-                tj = theta[j]
-                S0 += tj
-                S1 += tj * xj
-                S2 += tj * np.outer(xj, xj)
-                j += 1
-            d = int(so[i:j].sum())
-            if d > 0:
-                mean = S1 / S0
-                grad += Xo[i:j][so[i:j] == 1].sum(axis=0) - d * mean
-                hess -= d * (S2 / S0 - np.outer(mean, mean))
-            i = j
-        try:
-            step = np.linalg.solve(-hess, grad)
-        except np.linalg.LinAlgError:
-            raise
-        beta_new = beta + step
-        if not np.all(np.isfinite(beta_new)):
-            raise np.linalg.LinAlgError("non-finite Cox update")
-        if np.max(np.abs(step)) < tol:
-            beta = beta_new
-            break
-        beta = beta_new
-    # observed information at the solution
     theta = np.exp(np.clip(Xo @ beta, -30, 30))
+    grad = np.zeros(p)
     hess = np.zeros((p, p))
     S0 = 0.0
     S1 = np.zeros(p)
@@ -147,6 +111,7 @@ def _fit_cox(X, time, status, max_iter=50, tol=1e-8):
     i = 0
     while i < n:
         j = i
+        # accumulate all rows tied at this time into the risk set first
         while j < n and to[j] == to[i]:
             xj = Xo[j]
             tj = theta[j]
@@ -157,20 +122,57 @@ def _fit_cox(X, time, status, max_iter=50, tol=1e-8):
         d = int(so[i:j].sum())
         if d > 0:
             mean = S1 / S0
+            grad += Xo[i:j][so[i:j] == 1].sum(axis=0) - d * mean
             hess -= d * (S2 / S0 - np.outer(mean, mean))
         i = j
+    return grad, hess
+
+
+def _fit_cox(X, time, status, strata=None, max_iter=50, tol=1e-8):
+    """Cox partial likelihood (Breslow ties), Newton-Raphson. `strata` gives
+    separate baseline hazards: risk sets are accumulated within each stratum."""
+    n, p = X.shape
+    if strata is None:
+        groups = [np.arange(n)]
+    else:
+        groups = [np.where(strata == s)[0] for s in pd.unique(strata)]
+    beta = np.zeros(p)
+    for _ in range(max_iter):
+        grad = np.zeros(p)
+        hess = np.zeros((p, p))
+        for g in groups:
+            gg, hh = _cox_grad_hess(X[g], time[g], status[g], beta)
+            grad += gg
+            hess += hh
+        step = np.linalg.solve(-hess, grad)
+        beta_new = beta + step
+        if not np.all(np.isfinite(beta_new)):
+            raise np.linalg.LinAlgError("non-finite Cox update")
+        if np.max(np.abs(step)) < tol:
+            beta = beta_new
+            break
+        beta = beta_new
+    hess = np.zeros((p, p))
+    for g in groups:
+        _, hh = _cox_grad_hess(X[g], time[g], status[g], beta)
+        hess += hh
     cov = np.linalg.inv(-hess)
     return beta, np.sqrt(np.diag(cov))
 
 
-def fit_estimate(analysis: dict, data: pd.DataFrame) -> Optional[dict]:
-    """Fit the declared estimator; return dict(value, se, ci_low, ci_high, n) or None."""
+def fit_estimate(analysis: dict, data: pd.DataFrame, strata=()) -> Optional[dict]:
+    """Fit the declared estimator; return dict(value, se, ci_low, ci_high, n) or None.
+
+    `strata` names variables to condition on without pooling: Cox strata (separate
+    baseline hazards) or GLM fixed-effect factors. Used by the assumption lattice.
+    """
     exposure = analysis["exposure"]
-    covariates = analysis["covariates"]
+    covariates = list(analysis["covariates"])
     outcome_cols = analysis["outcome_cols"]
     estimator = analysis["estimator"]
+    strata = [s for s in strata if s not in [exposure] + covariates]
 
-    used = list(outcome_cols) + [exposure] + list(covariates)
+    used = list(outcome_cols) + [exposure] + covariates + list(strata)
     cc = data[used].dropna()
     n = int(cc.shape[0])
     if n < len(used) + 2:
@@ -181,10 +183,17 @@ def fit_estimate(analysis: dict, data: pd.DataFrame) -> Optional[dict]:
             X, names = _design_matrix(cc, exposure, covariates, intercept=False)
             time = cc[outcome_cols[0]].to_numpy(dtype=float)
             status = cc[outcome_cols[1]].to_numpy(dtype=float)
-            beta, se = _fit_cox(X, time, status)
+            strat = None
+            if strata:
+                strat = cc[strata].astype(str).agg("|".join, axis=1).to_numpy()
+            beta, se = _fit_cox(X, time, status, strata=strat)
         else:
-            X, names = _design_matrix(cc, exposure, covariates, intercept=True)
-            y = cc[outcome_cols[0]].to_numpy(dtype=float)
+            gcov = covariates + list(strata)
+            cc2 = cc.copy()
+            for s in strata:
+                cc2[s] = cc2[s].astype("category")
+            X, names = _design_matrix(cc2, exposure, gcov, intercept=True)
+            y = cc2[outcome_cols[0]].to_numpy(dtype=float)
             beta, se = _fit_glm(X, y, estimator)
     except (np.linalg.LinAlgError, ValueError, FloatingPointError):
         return None

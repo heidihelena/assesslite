@@ -59,13 +59,19 @@ of an audit file is a `spec/` change and bumps the spec version.
 - Geographical holdout as a first spatial-flavoured attack (leave-one-region-out),
   ahead of true spatial translation.
 
-## v0.3 — the lattice
+## The lattice — done in part (v0.2.0)
 
-- Render results as a lattice of progressively stronger structural commitments rather
-  than a flat list: each node is a set of assumed invariances, each edge adds one, and
-  each node shows what became identifiable and whether it stayed stable. This is the
-  view that shows "stronger symmetry buys stronger identification, at the cost of a
-  stronger assumption" — the paper's central trade-off, made navigable.
+Brought forward from v0.3. `assumption_lattice()` renders the **pooling** commitments as a
+lattice: the axes are the pooling invariances (cluster, time), each node pools some axes and
+stratifies the rest (Cox `strata()` / GLM fixed effects), and the exposure estimate is refit at
+every node. Nodes are classified consistent / attenuated / reversed against the fully-pooled
+estimate, giving a three-way lattice verdict — does the conclusion depend on the pooling
+commitments? Rendered as a Hasse diagram plus a node table; stored as a top-level `lattice`
+object validated against the shared schema. Spec: `spec/lattice.md`. This realises the paper's
+"stronger symmetry buys a stronger (single) number, at the cost of a stronger assumption" for
+the pooling axes. Still to generalise: a lattice over the identification invariances that
+**re-estimates** what becomes identifiable at each node (needs per-node estimand definitions), and
+richer visual layout for more axes.
 
 ## v0.4 — structured dependence and the GCM bridge
 

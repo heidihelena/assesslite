@@ -151,6 +151,34 @@
         "abstention_rules": { "type": "object" }
       }
     },
+    "lattice": {
+      "type": "object",
+      "description": "optional pooling assumption lattice: the exposure estimate under every pool-or-stratify choice",
+      "required": ["axes", "nodes", "verdict"],
+      "properties": {
+        "axes": { "type": "array", "items": { "type": "string" } },
+        "variables": { "type": "object" },
+        "verdict": { "enum": ["stable", "unstable", "not_resolvable"] },
+        "reading": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["pooled", "estimate", "status"],
+            "properties": {
+              "pooled": { "type": "array", "items": { "type": "string" } },
+              "stratified": { "type": "array", "items": { "type": "string" } },
+              "n_pooled": { "type": "integer" },
+              "estimate": { "type": "number" },
+              "ci_low": { "type": "number" },
+              "ci_high": { "type": "number" },
+              "n": { "type": "integer" },
+              "status": { "enum": ["consistent", "attenuated", "reversed"] }
+            }
+          }
+        }
+      }
+    },
     "provenance": {
       "type": "object",
       "required": ["created", "engine", "engine_version", "spec_version", "data_fingerprint"],

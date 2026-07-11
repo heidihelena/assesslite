@@ -50,7 +50,7 @@ def audit_as_list(assessment) -> dict:
         tests.append(obj)
 
     a = assessment.analysis
-    return {
+    audit = {
         "spec_version": "0.1",
         "analysis": {
             "unit": a["unit"], "outcome": a["outcome"], "exposure": a["exposure"],
@@ -79,6 +79,9 @@ def audit_as_list(assessment) -> dict:
             "data_fingerprint": _fingerprint(assessment.data),
         },
     }
+    if assessment.lattice is not None:
+        audit["lattice"] = assessment.lattice
+    return audit
 
 
 def export_audit(assessment, path: str | None = None) -> dict:

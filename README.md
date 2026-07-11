@@ -132,8 +132,14 @@ shared schema.
 
 All fold into the same three-way verdicts and decision rules.
 
-Not yet built: latent-node support for the graph checks, simulation-based violation testing,
-spatial/network transformation groups, and the assumption lattice view.
+It also builds an **assumption lattice** (`assumption_lattice()`): the pooling invariances
+("pool across clusters / time") are the "stronger symmetry → one number" commitments, so the
+lattice refits the exposure estimate under every pool-or-stratify combination and shows, as a
+Hasse diagram, whether the conclusion depends on those commitments (`spec/lattice.md`). This is
+the geometric-causal-models trade-off made navigable.
+
+Not yet built: latent-node support for the graph checks, simulation-based violation testing, and
+spatial/network transformation groups.
 
 ## What this is not
 

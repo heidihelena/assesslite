@@ -440,7 +440,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T13:11:52+0300",
+    "created": "2026-07-11T13:58:51+0300",
     "engine": "assesslite-python",
     "engine_version": "0.2.0",
     "platform": "Python 3.11.8",
@@ -450,5 +450,73 @@
       "n_cols": 8,
       "md5": "93ca8ff36545603764ae1e6e35b57e82"
     }
+  },
+  "lattice": {
+    "axes": [
+      "cluster_exchangeability",
+      "temporal_translation"
+    ],
+    "variables": {
+      "cluster_exchangeability": "hospital",
+      "temporal_translation": "diagnosis_year"
+    },
+    "nodes": [
+      {
+        "pooled": [],
+        "stratified": [
+          "cluster_exchangeability",
+          "temporal_translation"
+        ],
+        "n_pooled": 0,
+        "estimate": -0.2538925939318985,
+        "ci_low": -0.3811835546274691,
+        "ci_high": -0.12660163323632792,
+        "n": 2506,
+        "status": "consistent"
+      },
+      {
+        "pooled": [
+          "cluster_exchangeability"
+        ],
+        "stratified": [
+          "temporal_translation"
+        ],
+        "n_pooled": 1,
+        "estimate": -0.25355994237126184,
+        "ci_low": -0.37324376661462216,
+        "ci_high": -0.1338761181279015,
+        "n": 2506,
+        "status": "consistent"
+      },
+      {
+        "pooled": [
+          "temporal_translation"
+        ],
+        "stratified": [
+          "cluster_exchangeability"
+        ],
+        "n_pooled": 1,
+        "estimate": -0.2699033577866613,
+        "ci_low": -0.38975642275074207,
+        "ci_high": -0.15005029282258053,
+        "n": 2506,
+        "status": "consistent"
+      },
+      {
+        "pooled": [
+          "cluster_exchangeability",
+          "temporal_translation"
+        ],
+        "stratified": [],
+        "n_pooled": 2,
+        "estimate": -0.2684150229723372,
+        "ci_low": -0.3872772899680404,
+        "ci_high": -0.14955275597663403,
+        "n": 2506,
+        "status": "consistent"
+      }
+    ],
+    "verdict": "stable",
+    "reading": "the exposure estimate keeps the same direction and stays distinguishable from no effect under every pool-or-stratify choice over {cluster exchangeability, temporal translation}; the conclusion does not depend on these pooling commitments"
   }
 }
