@@ -108,7 +108,7 @@ from `python/`.
 
 ## Status
 
-v0.3.0 (development) — working end-to-end in both R and Python against one shared schema.
+v0.4.0 (development) — working end-to-end in both R and Python against one shared schema.
 The baseline: declaration, invariance ledger, the four transformation attacks (unit
 permutation, cluster holdout, temporal split, subgroup stability), three-way verdicts, an
 abstention-capable decision layer, JSON audit export, and an HTML report. Estimators: Cox
@@ -155,6 +155,12 @@ It also builds an **assumption lattice** (`assumption_lattice()`): the pooling i
 lattice refits the exposure estimate under every pool-or-stratify combination and shows, as a
 Hasse diagram, whether the conclusion depends on those commitments (`spec/lattice.md`). This is
 the geometric-causal-models trade-off made navigable.
+
+**v0.4** adds the three "future work" items in scoped form: `spatial_autocorrelation`
+(Moran's I on model residuals — the random-field diagnostic, attacking a new
+`spatial_independence` invariance), interference `exposure_map`s (`mean`/`any`/`sum` —
+declared spillover mechanisms), and **identification repair** (when an effect is not
+identifiable, `adjustment_check` names which latent measurement would fix it).
 
 The full v0.3 attack set — confounding sensitivity and scenarios, DAG consistency and adjustment
 (with latent-node non-identifiability), positivity, spatial holdout, and network interference —

@@ -14,7 +14,8 @@ test_invariance(
   spatial_k = 3,
   tip_ratio = NULL,
   confounder_prevalence = 0.2,
-  spatial_knn = 8
+  spatial_knn = 8,
+  exposure_map = "mean"
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ or NULL for the null (default NULL).}
 confounding_scenarios (default 0.2).}
 
 \item{spatial_knn}{neighbours for the spatial_autocorrelation weight matrix (default 8).}
+
+\item{exposure_map}{neighbour-exposure summary for interference_check:
+"mean" (default), "any", or "sum".}
 }
 \value{
 the audit with the requested attacks recorded and ledger verdicts updated.
