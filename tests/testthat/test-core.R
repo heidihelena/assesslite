@@ -394,6 +394,24 @@ test_that("adjustment_check reports non-identifiability under a latent confounde
   expect_true(r2$adjustment$identifiable)
 })
 
+test_that("identification repair names the latent measurement that restores identifiability", {
+  d <- data.frame(X = rbinom(300, 1, .5), Y = rbinom(300, 1, .5))
+  a <- structural_audit(d, outcome = "Y", exposure = "X")
+  a <- declare_graph(a, c("U -> X", "U -> Y", "X -> Y"), latent = "U")
+  r <- test_invariance(a, tests = "adjustment_check")$tests$adjustment_check
+  expect_false(r$adjustment$identifiable)
+  expect_equal(length(r$adjustment$repair), 1L)
+  expect_equal(as.character(r$adjustment$repair[[1]]), "U")
+  expect_match(r$reading, "measuring \\{U\\}")
+
+  a2 <- structural_audit(d, outcome = "Y", exposure = "X")
+  a2 <- declare_graph(a2, c("U1 -> X", "U1 -> Y", "U2 -> X", "U2 -> Y", "X -> Y"),
+                      latent = c("U1", "U2"))
+  r2 <- test_invariance(a2, tests = "adjustment_check")$tests$adjustment_check
+  expect_equal(length(r2$adjustment$repair), 1L)
+  expect_setequal(as.character(r2$adjustment$repair[[1]]), c("U1", "U2"))
+})
+
 test_that("declare_graph validates latent nodes and graph_check skips latent implications", {
   d <- data.frame(C = rnorm(50), X = rbinom(50, 1, .5), Y = rbinom(50, 1, .5))
   a <- structural_audit(d, outcome = "Y", exposure = "X")

@@ -24,6 +24,14 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.4 — in progress
 
+- **Interference exposure maps** — **done.** `interference_check(..., exposure_map=)` declares
+  how spillover aggregates: `mean` (fraction-of-neighbourhood), `any` (contagion), `sum` (dose).
+  Recorded in the `spillover` block. Spec: `spec/network.md`.
+- **Identification repair** — **done.** When the effect is not identifiable, `adjustment_check`
+  searches latent-node subsets (singletons, then pairs) whose measurement would restore a valid
+  observed adjustment set, records them as `adjustment.repair`, and names them in the reading.
+  The scoped version of a re-estimating identification lattice. Spec: `spec/graph/adjustment.md`.
+
 - **Spatial autocorrelation (the random-field diagnostic)** — **done.** `spatial_autocorrelation`
   attacks the new `spatial_independence` invariance: Moran's I on the outcome-model residuals
   (martingale for Cox via a Breslow baseline hazard, response for GLMs) over a row-standardised

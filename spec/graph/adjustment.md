@@ -59,7 +59,16 @@ blocked). When a valid set exists, the minimal `sufficient_set` is a greedy redu
    conditions on a descendant of X. The reading names which, and gives a sufficient set.
 3. `stable` if Z satisfies the backdoor criterion.
 
-The `identifiable` flag is recorded in the audit's `adjustment` block. A `stable` verdict is
+The `identifiable` flag is recorded in the audit's `adjustment` block.
+
+**Identification repair (v0.4).** When the effect is not identifiable, the check searches the
+latent nodes for minimal subsets (singletons, then pairs; skipped above 8 latents) whose
+measurement would restore a valid observed adjustment set — re-running the canonical-set
+existence test with each candidate treated as observed. The result is recorded as
+`adjustment.repair` (a list of node sets) and named in the reading: "measuring {U} would make
+the effect identifiable by adjustment". This is the scoped version of a re-estimating
+identification lattice: it tells the analyst which measurement would move the analysis from
+non-identifiable to identifiable. A `stable` verdict is
 conditional on the declared graph being correct (which `graph_check` probes separately). The
 verdict flows through the ordinary decision rules on the `adjustment_sufficiency` invariance —
 a non-identifiable effect caps the decision at `conditional`.

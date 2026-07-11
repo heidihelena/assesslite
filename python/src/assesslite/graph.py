@@ -252,7 +252,7 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
                   f"'{Y if Y else '<none>'}' is not a node in the declared graph",
                   {"exposure": X, "outcome": Y, "adjusted": adjusted, "sufficient_set": [],
                    "valid": None, "identifiable": None, "open_backdoor": None,
-                   "over_adjustment": [], "missing": []})
+                   "over_adjustment": [], "missing": [], "repair": []})
 
     latent = set(g.get("latent", []))
     observed = [v for v in g["nodes"] if v not in latent]
@@ -265,8 +265,26 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
     # canonical observed adjustment set (van der Zander et al.): a valid adjustment set
     # exists iff this one is valid.
     anc = ancestors_of(parents, {X, Y})
-    z_all = [v for v in anc if v in observed and v not in ({X, Y} | desc_X)]
+
+    def canonical_set(obs_nodes):
+        return [v for v in anc if v in obs_nodes and v not in ({X, Y} | desc_X)]
+
+    z_all = canonical_set(set(observed))
     identifiable = backdoor_valid(parents, X, Y, z_all)
+
+    # identification repair: which latent node sets, if measured, would restore an
+    # identifiable effect? Minimal subsets of the latent nodes, size 1 then 2.
+    repair = []
+    latent_list = sorted(latent)
+    if not identifiable and 0 < len(latent_list) <= 8:
+        for L in latent_list:
+            if backdoor_valid(parents, X, Y, canonical_set(set(observed) | {L})):
+                repair.append([L])
+        if not repair and len(latent_list) >= 2:
+            from itertools import combinations
+            for pr in combinations(latent_list, 2):
+                if backdoor_valid(parents, X, Y, canonical_set(set(observed) | set(pr))):
+                    repair.append(list(pr))
     valid = (len(over) == 0) and not open_backdoor and identifiable
 
     suff = list(z_all)
@@ -284,7 +302,7 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
     adj = {"exposure": X, "outcome": Y, "adjusted": adjusted,
            "sufficient_set": suff if identifiable else [],
            "valid": valid, "identifiable": identifiable, "open_backdoor": open_backdoor,
-           "over_adjustment": over, "missing": missing}
+           "over_adjustment": over, "missing": missing, "repair": repair}
 
     def fmt(s):
         return ", ".join(s) if s else "empty"
@@ -292,10 +310,18 @@ def test_adjustment_check(assessment, outcome_node=None) -> dict:
     if not identifiable:
         lat_txt = (f" (e.g. through the unmeasured node(s) {{{fmt(sorted(latent))}}})"
                    if latent else "")
+        if repair:
+            rep_txt = (". Identification repair: measuring {"
+                       + "} or {".join(" + ".join(r) for r in repair)
+                       + "} would make the effect identifiable by adjustment")
+        elif latent:
+            rep_txt = ". No single latent node (or pair) restores identifiability by adjustment"
+        else:
+            rep_txt = ""
         reading = (f"given the declared graph, the effect of {X} on {Y} is not identifiable by "
                    f"adjusting for measured covariates: a backdoor path cannot be blocked by any "
                    f"observed set{lat_txt}. No adjustment is sufficient; this is not resolvable by "
-                   f"covariate adjustment")
+                   f"covariate adjustment{rep_txt}")
         return mk("not_resolvable", reading, adj)
 
     if valid:

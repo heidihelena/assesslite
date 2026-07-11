@@ -430,6 +430,22 @@ def test_adjustment_check_latent_non_identifiability():
     assert r2["adjustment"]["identifiable"] is True
 
 
+def test_identification_repair_names_latent_measurement():
+    d = pd.DataFrame({"X": np.random.default_rng(0).binomial(1, .5, 300),
+                      "Y": np.random.default_rng(1).binomial(1, .5, 300)})
+    a = StructuralAudit(d, outcome="Y", exposure="X")
+    a.declare_graph(["U -> X", "U -> Y", "X -> Y"], latent=["U"]).test(["adjustment_check"])
+    r = a.tests["adjustment_check"]
+    assert r["adjustment"]["identifiable"] is False
+    assert r["adjustment"]["repair"] == [["U"]]
+    assert "measuring {U}" in r["reading"]
+
+    a2 = StructuralAudit(d, outcome="Y", exposure="X")
+    a2.declare_graph(["U1 -> X", "U1 -> Y", "U2 -> X", "U2 -> Y", "X -> Y"],
+                     latent=["U1", "U2"]).test(["adjustment_check"])
+    assert a2.tests["adjustment_check"]["adjustment"]["repair"] == [["U1", "U2"]]
+
+
 def test_declare_graph_validates_latent_and_skips_latent_implications():
     d = pd.DataFrame({"C": np.random.default_rng(0).normal(size=50),
                       "X": np.random.default_rng(1).binomial(1, 0.5, 50),

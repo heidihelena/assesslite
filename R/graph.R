@@ -248,7 +248,8 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
       list(exposure = X, outcome = if (is.na(Y)) NA_character_ else Y,
            adjusted = I(as.character(adjusted)), sufficient_set = I(character(0)),
            valid = NA, identifiable = NA, open_backdoor = NA,
-           over_adjustment = I(character(0)), missing = I(character(0)))))
+           over_adjustment = I(character(0)), missing = I(character(0)),
+           repair = list())))
   }
 
   latent <- if (is.null(g$latent)) character() else g$latent
@@ -264,8 +265,32 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
   # canonical observed adjustment set (van der Zander et al.): a valid adjustment
   # set exists iff this one is valid. Ancestors of X or Y, observed, not X/Y and
   # not descendants of X.
-  z_all <- setdiff(intersect(ancestors_of(g$parents, c(X, Y)), observed), c(X, Y, desc_X))
+  canonical_set <- function(obs_nodes) {
+    setdiff(intersect(ancestors_of(g$parents, c(X, Y)), obs_nodes), c(X, Y, desc_X))
+  }
+  z_all <- canonical_set(observed)
   identifiable <- backdoor_valid(g$parents, X, Y, z_all)
+
+  # identification repair: which latent node sets, if measured, would restore an
+  # identifiable effect? Minimal subsets of the latent nodes, size 1 then 2.
+  repair <- list()
+  if (!identifiable && length(latent) > 0 && length(latent) <= 8) {
+    singles <- character(0)
+    for (L in latent) {
+      obs2 <- c(observed, L)
+      if (backdoor_valid(g$parents, X, Y, canonical_set(obs2))) {
+        repair[[length(repair) + 1]] <- I(as.character(L)); singles <- c(singles, L)
+      }
+    }
+    if (length(repair) == 0 && length(latent) >= 2) {
+      pairs <- utils::combn(latent, 2, simplify = FALSE)
+      for (pr in pairs) {
+        obs2 <- c(observed, pr)
+        if (backdoor_valid(g$parents, X, Y, canonical_set(obs2)))
+          repair[[length(repair) + 1]] <- I(as.character(pr))
+      }
+    }
+  }
 
   # minimal sufficient set: greedily reduce the canonical set
   suff <- z_all
@@ -286,14 +311,22 @@ test_adjustment_check <- function(audit, outcome_node = NULL) {
               valid = valid && identifiable, identifiable = identifiable,
               open_backdoor = open_backdoor,
               over_adjustment = I(as.character(over)),
-              missing = I(as.character(missing)))
+              missing = I(as.character(missing)),
+              repair = repair)
 
   if (!identifiable) {
     lat_txt <- if (length(latent) > 0) sprintf(" (e.g. through the unmeasured node(s) {%s})",
                                                paste(latent, collapse = ", ")) else ""
+    rep_txt <- if (length(repair) > 0)
+      sprintf(". Identification repair: measuring {%s} would make the effect identifiable by adjustment",
+              paste(vapply(repair, function(r) paste(unclass(r), collapse = " + "), character(1)),
+                    collapse = "} or {"))
+    else if (length(latent) > 0)
+      ". No single latent node (or pair) restores identifiability by adjustment"
+    else ""
     reading <- sprintf(paste0("given the declared graph, the effect of %s on %s is not identifiable by ",
       "adjusting for measured covariates: a backdoor path cannot be blocked by any observed set%s. ",
-      "No adjustment is sufficient; this is not resolvable by covariate adjustment"), X, Y, lat_txt)
+      "No adjustment is sufficient; this is not resolvable by covariate adjustment%s"), X, Y, lat_txt, rep_txt)
     return(mk("not_resolvable", reading, adj))
   }
   if (valid) {
