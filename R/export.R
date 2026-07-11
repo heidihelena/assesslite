@@ -13,11 +13,13 @@ audit_as_list <- function(audit) {
 
   tests <- unname(lapply(audit$tests, function(t) {
     v <- t$variants
-    list(test = t$test, invariance = t$invariance, verdict = t$verdict,
-         metrics = t$metrics,
-         variants = lapply(seq_len(nrow(v)), function(i) as.list(v[i, ])),
-         n_failed_refits = t$n_failed,
-         reading = t$reading)
+    obj <- list(test = t$test, invariance = t$invariance, verdict = t$verdict,
+                variants = lapply(seq_len(nrow(v)), function(i) as.list(v[i, ])),
+                n_failed_refits = t$n_failed,
+                reading = t$reading)
+    if (!is.null(t$metrics)) obj$metrics <- t$metrics
+    if (!is.null(t$sensitivity)) obj$sensitivity <- t$sensitivity
+    obj
   }))
 
   # wrap array-typed fields so jsonlite's auto_unbox does not collapse a

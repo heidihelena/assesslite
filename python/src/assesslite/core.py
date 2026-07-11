@@ -13,6 +13,7 @@ import pandas as pd
 from . import decision as _decision
 from . import export as _export
 from . import report as _report
+from . import sensitivity as _sens
 from . import transformations as _tf
 from .estimator import detect_estimator, fit_estimate
 
@@ -22,11 +23,13 @@ INVARIANCE_VOCABULARY = (
     "cluster_exchangeability",
     "temporal_translation",
     "subgroup_transport",
+    "unobserved_confounding",
     "spatial_translation",
     "network_relabelling",
 )
 
-_KNOWN_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
+_DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
+_KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity",)
 
 
 def invariance_vocabulary() -> tuple:
@@ -121,8 +124,12 @@ class StructuralAudit:
                 l["verdict"] = verdict
 
     # --- attacks --------------------------------------------------------------
-    def test(self, tests=_KNOWN_TESTS, seed: int = 1):
-        """Run transformation attacks against the declared invariances."""
+    def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25):
+        """Run attacks against the declared invariances.
+
+        tests may include confounding_sensitivity (E-value); confounding_benchmark
+        is the plausible unmeasured-confounding strength on the risk-ratio scale.
+        """
         bad = [t for t in tests if t not in _KNOWN_TESTS]
         if bad:
             raise ValueError("unknown tests: " + ", ".join(bad))
@@ -132,6 +139,7 @@ class StructuralAudit:
             "cluster_holdout": lambda: _tf.test_cluster_holdout(self),
             "temporal_split": lambda: _tf.test_temporal_split(self),
             "subgroup_stability": lambda: _tf.test_subgroup_stability(self),
+            "confounding_sensitivity": lambda: _sens.test_confounding_sensitivity(self, confounding_benchmark),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

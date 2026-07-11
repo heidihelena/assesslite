@@ -10,6 +10,7 @@ invariance_vocabulary <- function() {
     "cluster_exchangeability",
     "temporal_translation",
     "subgroup_transport",
+    "unobserved_confounding",
     "spatial_translation",
     "network_relabelling")
 }

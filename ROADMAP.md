@@ -24,12 +24,20 @@ of an audit file is a `spec/` change and bumps the spec version.
 
 ## v0.2 — wrap the established tools (the defensible product line)
 
+- **Confounding sensitivity** — **done (v0.2.0).** New `unobserved_confounding` invariance
+  attacked by `confounding_sensitivity`, an E-value analysis (VanderWeele & Ding, 2017):
+  how strong an unmeasured confounder would have to be, on the risk-ratio scale, to move the
+  interval to no effect. Self-contained (no external package), ratio-scale estimators
+  (Cox HR, logistic OR) under the stated rare-outcome approximation; undefined on a linear
+  scale (an error, not a silent pass). Folds into the same three-way verdict grammar —
+  `not_resolvable` when the interval already includes no effect — and the same decision
+  rules. Spec: `spec/stability/sensitivity.md`. Implemented in both R and Python; audit
+  records carry a `sensitivity` block that validates against the shared schema. This is a
+  first-class sensitivity attack rather than a `sensemakr`/`tipr` wrapper, which keeps the
+  dependency footprint at numpy/pandas and base R.
 - **DAG implications** via `dagitty`: derive the adjustment set from a declared graph,
   list testable conditional-independence implications, and flag when the fitted
   adjustment set disagrees with the declared one. Feeds the ledger.
-- **Confounding sensitivity** via `sensemakr` (continuous) and `tipr` (binary): add an
-  `unobserved_confounding` invariance whose "attack" is the robustness value, folded into
-  the same three-way verdict grammar.
 - **Simulation-based violation** (spec `simulated_violation`): parametrically inject a
   declared violation at increasing strength, record where the estimate crosses the
   decision threshold. This is the direct estimator-failure map.

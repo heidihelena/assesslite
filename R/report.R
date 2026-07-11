@@ -77,6 +77,21 @@ render_report <- function(audit, path) {
   }, character(1)), collapse = "\n")
 
   test_blocks <- paste0(vapply(audit$tests, function(t) {
+    if (!is.null(t$sensitivity)) {
+      s <- t$sensitivity
+      body <- sprintf(
+        "<table><tr><th>quantity</th><th>value</th></tr>
+         <tr><td>ratio estimate</td><td>%.2f [%.2f, %.2f]</td></tr>
+         <tr><td>E-value (point estimate)</td><td>%.2f</td></tr>
+         <tr><td>E-value (interval limit nearest null)</td><td>%s</td></tr>
+         <tr><td>plausible confounding benchmark</td><td>%.2f</td></tr></table>",
+        s$rr_point, s$rr_ci_low, s$rr_ci_high, s$e_value_point,
+        if (isTRUE(all.equal(s$e_value_ci, 1))) "1 (interval includes no effect)"
+        else sprintf("%.2f", s$e_value_ci), s$benchmark)
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
+    }
     rows <- paste0(apply(t$variants, 1, function(r) {
       sprintf("<tr><td>%s</td><td>%s</td><td>[%s, %s]</td><td>%s</td></tr>",
               esc(r[["label"]]), fmt(as.numeric(r[["estimate"]])),

@@ -94,28 +94,32 @@ test_subgroup_stability <- function(audit) {
                     collect_variants(rows), n_failed)
 }
 
-#' Run transformation attacks against the declared invariances
+#' Run attacks against the declared invariances
 #'
 #' @param audit a structural_audit object with a populated ledger.
 #' @param tests character vector from: unit_permutation, cluster_holdout,
-#'   temporal_split, subgroup_stability.
+#'   temporal_split, subgroup_stability, confounding_sensitivity.
 #' @param seed integer seed for the permutation test, recorded implicitly in
 #'   the audit through the variant estimates.
+#' @param confounding_benchmark plausible unmeasured-confounding strength on the
+#'   E-value (risk-ratio) scale, used by confounding_sensitivity (default 1.25).
 test_invariance <- function(audit,
                             tests = c("unit_permutation", "cluster_holdout",
                                       "temporal_split", "subgroup_stability"),
-                            seed = 1) {
+                            seed = 1, confounding_benchmark = 1.25) {
   stopifnot(inherits(audit, "structural_audit"))
   set.seed(seed)
-  known <- c("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
+  known <- c("unit_permutation", "cluster_holdout", "temporal_split",
+             "subgroup_stability", "confounding_sensitivity")
   bad <- setdiff(tests, known)
   if (length(bad) > 0) stop("unknown tests: ", paste(bad, collapse = ", "))
   target_invariance <- function(t) switch(t,
-    unit_permutation   = if (is.null(audit$structure$cluster)) "unit_permutation"
-                         else "unit_permutation_within_cluster",
-    cluster_holdout    = "cluster_exchangeability",
-    temporal_split     = "temporal_translation",
-    subgroup_stability = "subgroup_transport")
+    unit_permutation        = if (is.null(audit$structure$cluster)) "unit_permutation"
+                              else "unit_permutation_within_cluster",
+    cluster_holdout         = "cluster_exchangeability",
+    temporal_split          = "temporal_translation",
+    subgroup_stability      = "subgroup_transport",
+    confounding_sensitivity = "unobserved_confounding")
   for (t in tests) {
     inv <- target_invariance(t)
     if (identical(ledger_status(audit, inv), "rejected")) {
@@ -124,10 +128,11 @@ test_invariance <- function(audit,
       next
     }
     res <- switch(t,
-      unit_permutation   = test_unit_permutation(audit),
-      cluster_holdout    = test_cluster_holdout(audit),
-      temporal_split     = test_temporal_split(audit),
-      subgroup_stability = test_subgroup_stability(audit))
+      unit_permutation        = test_unit_permutation(audit),
+      cluster_holdout         = test_cluster_holdout(audit),
+      temporal_split          = test_temporal_split(audit),
+      subgroup_stability      = test_subgroup_stability(audit),
+      confounding_sensitivity = test_confounding_sensitivity(audit, confounding_benchmark))
     audit$tests[[t]] <- res
     audit <- mark_tested(audit, res$invariance, res$verdict)
   }

@@ -18,8 +18,15 @@ true; the ledger records it so it can be attacked.
 | `cluster_exchangeability` | permute cluster identities | pooling across clusters; transport of the estimate to an unobserved cluster |
 | `temporal_translation` | shift the calendar window | pooling across periods; applying the estimate to a future period |
 | `subgroup_transport` | move the mechanism across declared subgroups | one pooled effect rather than subgroup-specific effects |
+| `unobserved_confounding` | none — this is the assumption that the measured adjustment set is sufficient (conditional exchangeability given measured covariates) | reading the adjusted association as the causal effect |
 | `spatial_translation` | translate the spatial field | pooling across locations (not yet implemented in R) |
 | `network_relabelling` | relabel nodes preserving graph structure | pooling across network positions (not yet implemented) |
+
+`unobserved_confounding` is different in kind from the transformation invariances above:
+it is not a symmetry of the data but the no-unmeasured-confounding assumption itself. Its
+attack is not a refit under a transformation but a **sensitivity analysis** — how strong an
+unmeasured confounder would have to be to overturn the result (see
+`spec/stability/sensitivity.md`). It carries a `verdict` in the same three-way vocabulary.
 
 ## Ledger statuses
 

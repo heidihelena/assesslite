@@ -52,6 +52,14 @@
       "licenses": "one pooled effect rather than stage-specific effects",
       "tested": true,
       "verdict": "stable"
+    },
+    {
+      "invariance": "unobserved_confounding",
+      "status": "assumed",
+      "rationale": "age, sex and stage are adjusted, but comorbidity and performance status are not measured",
+      "licenses": "reading the adjusted hazard ratio as the causal effect of adherence",
+      "tested": true,
+      "verdict": "stable"
     }
   ],
   "estimate": {
@@ -66,13 +74,6 @@
       "test": "unit_permutation",
       "invariance": "unit_permutation_within_cluster",
       "verdict": "stable",
-      "metrics": {
-        "max_shift_z": 0.0,
-        "sign_flips_resolved": 0,
-        "sign_flips_unresolved": 0,
-        "mds": null,
-        "null_crossings": 0
-      },
       "variants": [
         {
           "label": "permutation 1",
@@ -116,19 +117,19 @@
         }
       ],
       "n_failed_refits": 0,
-      "reading": "estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically"
+      "reading": "estimates are identical under permutation, as they must be; the estimator treats unit order symmetrically",
+      "metrics": {
+        "max_shift_z": 0.0,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": null,
+        "null_crossings": 0
+      }
     },
     {
       "test": "cluster_holdout",
       "invariance": "cluster_exchangeability",
       "verdict": "unstable",
-      "metrics": {
-        "max_shift_z": 2.2739765786857196,
-        "sign_flips_resolved": 0,
-        "sign_flips_unresolved": 0,
-        "mds": 0.1241789071536595,
-        "null_crossings": 0
-      },
       "variants": [
         {
           "label": "without hospital = H01",
@@ -228,19 +229,19 @@
         }
       ],
       "n_failed_refits": 0,
-      "reading": "the estimate moved by up to 2.3 standard errors of the difference; cluster exchangeability does not hold up under this attack, and the pooling or transport it licenses loses its basis"
+      "reading": "the estimate moved by up to 2.3 standard errors of the difference; cluster exchangeability does not hold up under this attack, and the pooling or transport it licenses loses its basis",
+      "metrics": {
+        "max_shift_z": 2.2739765786857196,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.1241789071536595,
+        "null_crossings": 0
+      }
     },
     {
       "test": "temporal_split",
       "invariance": "temporal_translation",
       "verdict": "stable",
-      "metrics": {
-        "max_shift_z": 1.1278506545554845,
-        "sign_flips_resolved": 0,
-        "sign_flips_unresolved": 0,
-        "mds": 0.17062907898276758,
-        "null_crossings": 1
-      },
       "variants": [
         {
           "label": "diagnosis_year early (2016-2021)",
@@ -260,19 +261,19 @@
         }
       ],
       "n_failed_refits": 0,
-      "reading": "the largest variant shift was 1.1 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.17, so the claim of temporal translation holds up under this test"
+      "reading": "the largest variant shift was 1.1 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.17, so the claim of temporal translation holds up under this test",
+      "metrics": {
+        "max_shift_z": 1.1278506545554845,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.17062907898276758,
+        "null_crossings": 1
+      }
     },
     {
       "test": "subgroup_stability",
       "invariance": "subgroup_transport",
       "verdict": "stable",
-      "metrics": {
-        "max_shift_z": 0.7440824759586337,
-        "sign_flips_resolved": 0,
-        "sign_flips_unresolved": 0,
-        "mds": 0.25906165680893745,
-        "null_crossings": 2
-      },
       "variants": [
         {
           "label": "stage = I",
@@ -308,7 +309,30 @@
         }
       ],
       "n_failed_refits": 0,
-      "reading": "the largest variant shift was 0.7 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.26, so the claim of subgroup transport holds up under this test"
+      "reading": "the largest variant shift was 0.7 standard errors of the difference, within sampling noise, and no resolved sign change occurred; the attack could have detected a shift of about 0.26, so the claim of subgroup transport holds up under this test",
+      "metrics": {
+        "max_shift_z": 0.7440824759586337,
+        "sign_flips_resolved": 0,
+        "sign_flips_unresolved": 0,
+        "mds": 0.25906165680893745,
+        "null_crossings": 2
+      }
+    },
+    {
+      "test": "confounding_sensitivity",
+      "invariance": "unobserved_confounding",
+      "verdict": "stable",
+      "variants": [],
+      "n_failed_refits": 0,
+      "reading": "explaining the interval away would require unmeasured confounding of at least 1.59 on the risk-ratio scale, stronger than the declared plausible benchmark (1.25); the conclusion is robust to confounding at that benchmark (E-value for the point estimate 1.94) (E-value on the risk-ratio scale under the rare-outcome approximation for the hazard ratio)",
+      "sensitivity": {
+        "e_value_point": 1.9424652647382668,
+        "e_value_ci": 1.5941393874843248,
+        "rr_point": 0.7645903926682883,
+        "rr_ci_low": 0.6789028158837793,
+        "rr_ci_high": 0.8610930090187224,
+        "benchmark": 1.25
+      }
     }
   ],
   "decision": {
@@ -317,7 +341,8 @@
     "load_bearing": [
       "unit_permutation_within_cluster",
       "temporal_translation",
-      "subgroup_transport"
+      "subgroup_transport",
+      "unobserved_confounding"
     ],
     "exposed_surface": [],
     "broken_by": "cluster_holdout",
@@ -327,9 +352,9 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T10:01:12+0300",
+    "created": "2026-07-11T11:27:58+0300",
     "engine": "assesslite-python",
-    "engine_version": "0.1.0",
+    "engine_version": "0.2.0",
     "platform": "Python 3.11.8",
     "spec_version": "0.1",
     "data_fingerprint": {

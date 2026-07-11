@@ -10,4 +10,4 @@ from .export import export_audit
 from .report import render_report
 
 __all__ = ["StructuralAudit", "invariance_vocabulary", "export_audit", "render_report"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

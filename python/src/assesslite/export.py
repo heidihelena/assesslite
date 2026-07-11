@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def _fingerprint(data: pd.DataFrame) -> dict:
@@ -26,9 +26,8 @@ def audit_as_list(assessment) -> dict:
     tests = []
     for t in assessment.tests.values():
         v = t["variants"]
-        tests.append({
+        obj = {
             "test": t["test"], "invariance": t["invariance"], "verdict": t["verdict"],
-            "metrics": t["metrics"],
             "variants": [
                 {"label": r["label"], "estimate": float(r["estimate"]),
                  "se": None if pd.isna(r["se"]) else float(r["se"]),
@@ -39,7 +38,12 @@ def audit_as_list(assessment) -> dict:
             ],
             "n_failed_refits": int(t["n_failed"]),
             "reading": t["reading"],
-        })
+        }
+        if t.get("metrics") is not None:
+            obj["metrics"] = t["metrics"]
+        if t.get("sensitivity") is not None:
+            obj["sensitivity"] = t["sensitivity"]
+        tests.append(obj)
 
     a = assessment.analysis
     return {
