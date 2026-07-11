@@ -65,9 +65,14 @@ a.assume("temporal_translation",
 a.assume("subgroup_transport",
          rationale="adherence is expected to act through the same pathways at every stage",
          licenses="one pooled effect rather than stage-specific effects")
+a.assume("unobserved_confounding",
+         rationale="age, sex and stage are adjusted, but comorbidity and performance status are not measured",
+         licenses="reading the adjusted hazard ratio as the causal effect of adherence")
 
 # --- attack, decide, export, report ------------------------------------------
-a.test(["unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability"], seed=7)
+a.test(["unit_permutation", "cluster_holdout", "temporal_split",
+        "subgroup_stability", "confounding_sensitivity"],
+       seed=7, confounding_benchmark=1.25)
 a.decide(abstain_if={"estimate_sign_changes": True, "effect_crosses_threshold": None})
 print(a)
 

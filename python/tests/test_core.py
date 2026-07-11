@@ -124,3 +124,55 @@ def test_export_conforms_to_schema_and_report_renders(tmp_path):
 def test_vocabulary_matches_spec():
     assert "unit_permutation" in invariance_vocabulary()
     assert "spatial_translation" in invariance_vocabulary()
+    assert "unobserved_confounding" in invariance_vocabulary()
+
+
+def simulate_survival(n=1200, effect=-0.7, seed=4):
+    rng = np.random.default_rng(seed)
+    age = rng.normal(65, 9, n)
+    x = rng.binomial(1, 1 / (1 + np.exp(0.02 * (age - 65))))
+    lp = effect * x + 0.03 * (age - 65)
+    te = rng.exponential(1 / (0.05 * np.exp(lp)))
+    tc = rng.uniform(1, 6, n)
+    return pd.DataFrame({"time": np.minimum(te, tc), "status": (te <= tc).astype(int),
+                         "x": x, "age": age})
+
+
+def test_evalue_matches_published_and_confounding_sensitivity_runs():
+    from assesslite.sensitivity import evalue_from_ratio
+    assert round(evalue_from_ratio(3.9), 2) == 7.26
+    assert evalue_from_ratio(1) == 1
+    assert evalue_from_ratio(0.5) == evalue_from_ratio(2)  # symmetric under inversion
+
+    a = StructuralAudit(simulate_survival(), outcome=("time", "status"),
+                        exposure="x", covariates=["age"])
+    a.assume("unobserved_confounding", "set may be incomplete", "adjusted HR as causal")
+    a.test(["confounding_sensitivity"], confounding_benchmark=1.25)
+    res = a.tests["confounding_sensitivity"]
+    assert res["verdict"] in ("stable", "unstable", "not_resolvable")
+    assert res["sensitivity"] is not None
+    assert res["sensitivity"]["e_value_point"] >= 1
+    assert abs(res["sensitivity"]["e_value_point"]
+               - evalue_from_ratio(res["sensitivity"]["rr_point"])) < 1e-9
+
+
+def test_confounding_sensitivity_undefined_on_linear_scale():
+    d = pd.DataFrame({"y": np.random.default_rng(0).normal(0, 1, 300),
+                      "x": np.random.default_rng(1).binomial(1, 0.5, 300)})
+    a = StructuralAudit(d, outcome="y", exposure="x")
+    with pytest.raises(ValueError, match="ratio-scale"):
+        a.test(["confounding_sensitivity"])
+
+
+def test_sensitivity_audit_conforms_to_schema(tmp_path):
+    import jsonschema
+    a = StructuralAudit(simulate_survival(), outcome=("time", "status"),
+                        exposure="x", covariates=["age"])
+    a.assume("unobserved_confounding", "set may be incomplete", "adjusted HR as causal")
+    a.test(["confounding_sensitivity"]).decide()
+    audit = a.export_audit()
+    schema = json.loads(SCHEMA.read_text())
+    jsonschema.validate(audit, schema)
+    hf = tmp_path / "r.html"
+    a.render_report(str(hf))
+    assert "E-value" in hf.read_text()

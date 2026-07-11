@@ -89,6 +89,22 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("sensitivity") is not None:
+            sv = t["sensitivity"]
+            e_ci = "1 (interval includes no effect)" if abs(sv["e_value_ci"] - 1) < 1e-9 else f"{sv['e_value_ci']:.2f}"
+            body = (
+                "<table><tr><th>quantity</th><th>value</th></tr>"
+                f"<tr><td>ratio estimate</td><td>{sv['rr_point']:.2f} [{sv['rr_ci_low']:.2f}, {sv['rr_ci_high']:.2f}]</td></tr>"
+                f"<tr><td>E-value (point estimate)</td><td>{sv['e_value_point']:.2f}</td></tr>"
+                f"<tr><td>E-value (interval limit nearest null)</td><td>{e_ci}</td></tr>"
+                f"<tr><td>plausible confounding benchmark</td><td>{sv['benchmark']:.2f}</td></tr></table>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{body}"
+                "<p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), body=body,
+                    reading=_esc(t["reading"])))
+            continue
         v = t["variants"]
         rows = "\n".join(
             "<tr><td>{lab}</td><td>{est}</td><td>[{lo}, {hi}]</td><td>{n}</td></tr>".format(

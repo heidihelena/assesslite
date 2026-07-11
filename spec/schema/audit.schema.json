@@ -57,7 +57,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["test", "invariance", "verdict", "metrics", "variants", "reading"],
+        "required": ["test", "invariance", "verdict", "reading"],
         "properties": {
           "test": { "type": "string" },
           "invariance": { "type": "string" },
@@ -85,6 +85,18 @@
                 "ci_high": { "type": ["number", "null"] },
                 "n": { "type": "integer" }
               }
+            }
+          },
+          "sensitivity": {
+            "type": "object",
+            "description": "present instead of variants for a sensitivity attack (e.g. E-value)",
+            "properties": {
+              "e_value_point": { "type": ["number", "null"] },
+              "e_value_ci": { "type": ["number", "null"] },
+              "rr_point": { "type": ["number", "null"] },
+              "rr_ci_low": { "type": ["number", "null"] },
+              "rr_ci_high": { "type": ["number", "null"] },
+              "benchmark": { "type": ["number", "null"] }
             }
           },
           "reading": { "type": "string" }

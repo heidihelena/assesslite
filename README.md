@@ -117,9 +117,13 @@ The **Python** interface is built to the same spec (pure numpy/pandas; Cox repro
 `coxph` Breslow fit exactly) with a pytest suite that validates its audit records against the
 shared schema.
 
-Not yet built: DAG implications (dagitty), confounding sensitivity (sensemakr/tipr),
-simulation-based violation testing, spatial/network transformation groups, and the assumption
-lattice view.
+**v0.2.0** adds `confounding_sensitivity` — an E-value attack (VanderWeele & Ding) on a new
+`unobserved_confounding` invariance: how strong an unmeasured confounder would have to be to
+move the interval to no effect. Ratio-scale estimators (Cox HR, logistic OR); folds into the
+same three-way verdicts and decision rules. See `spec/stability/sensitivity.md`.
+
+Not yet built: DAG implications (dagitty), simulation-based violation testing,
+spatial/network transformation groups, and the assumption lattice view.
 
 ## What this is not
 

@@ -64,10 +64,15 @@ audit <- assume_invariance(audit, "subgroup_transport",
   rationale = "adherence is expected to act through the same pathways at every stage",
   licenses  = "one pooled effect rather than stage-specific effects")
 
+audit <- assume_invariance(audit, "unobserved_confounding",
+  rationale = "age, sex and stage are adjusted, but comorbidity and performance status are not measured",
+  licenses  = "reading the adjusted hazard ratio as the causal effect of adherence")
+
 # --- attack the ledger --------------------------------------------------------
 audit <- test_invariance(audit,
-  tests = c("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability"),
-  seed = 7)
+  tests = c("unit_permutation", "cluster_holdout", "temporal_split",
+            "subgroup_stability", "confounding_sensitivity"),
+  seed = 7, confounding_benchmark = 1.25)
 
 # --- decide, export, report ---------------------------------------------------
 audit <- decide(audit, abstain_if = list(estimate_sign_changes = TRUE,

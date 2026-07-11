@@ -1,6 +1,6 @@
 Package: assesslite
 Title: AssessLite: Test What Your Analysis Depends On
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Heidi", "Andersén", email = "andersenheidihelena@gmail.com",
                   role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5923-5865"))
 Description: Structural assumption assessment for causal analysis. Makes the

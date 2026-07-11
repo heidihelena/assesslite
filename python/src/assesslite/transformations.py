@@ -28,6 +28,7 @@ def target_invariance(assessment, test: str) -> str:
         "cluster_holdout": "cluster_exchangeability",
         "temporal_split": "temporal_translation",
         "subgroup_stability": "subgroup_transport",
+        "confounding_sensitivity": "unobserved_confounding",
     }[test]
 
 

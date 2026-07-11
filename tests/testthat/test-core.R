@@ -88,6 +88,32 @@ test_that("untested assumed invariances cap the decision at conditional", {
     expect_true("temporal_translation" %in% a$decision$exposed_surface)
 })
 
+test_that("E-value matches the published value and confounding_sensitivity runs", {
+  expect_equal(round(evalue_from_ratio(3.9), 2), 7.26)
+  expect_equal(evalue_from_ratio(1), 1)
+  expect_equal(evalue_from_ratio(0.5), evalue_from_ratio(2))  # symmetric under inversion
+
+  set.seed(4); n <- 1200
+  age <- rnorm(n, 65, 9); x <- rbinom(n, 1, plogis(-0.02 * (age - 65)))
+  lp <- -0.7 * x + 0.03 * (age - 65)
+  te <- rexp(n, 0.05 * exp(lp)); tc <- runif(n, 1, 6)
+  d <- data.frame(time = pmin(te, tc), status = as.integer(te <= tc), x = x, age = age)
+  a <- structural_audit(d, outcome = c("time", "status"), exposure = "x", covariates = "age")
+  a <- assume_invariance(a, "unobserved_confounding", "set may be incomplete", "adjusted HR as causal")
+  a <- test_invariance(a, tests = "confounding_sensitivity", confounding_benchmark = 1.25)
+  res <- a$tests$confounding_sensitivity
+  expect_true(res$verdict %in% c("stable", "unstable", "not_resolvable"))
+  expect_true(!is.null(res$sensitivity))
+  expect_true(res$sensitivity$e_value_point >= 1)
+  expect_equal(res$sensitivity$e_value_point, evalue_from_ratio(res$sensitivity$rr_point))
+})
+
+test_that("confounding_sensitivity is undefined on a linear scale", {
+  d <- data.frame(y = rnorm(300), x = rbinom(300, 1, 0.5))
+  a <- structural_audit(d, outcome = "y", exposure = "x")
+  expect_error(test_confounding_sensitivity(a), "ratio-scale")
+})
+
 test_that("audit export conforms to the schema shape and report renders", {
   a <- open_audit(simulate_cohort())
   a <- assume_invariance(a, "cluster_exchangeability", "same guideline", "pooling")
