@@ -138,6 +138,42 @@ def simulate_survival(n=1200, effect=-0.7, seed=4):
                          "x": x, "age": age})
 
 
+def test_interference_check_detects_spillover():
+    from assesslite.network import neighbor_exposure
+    rng = np.random.default_rng(1); n = 1500
+    ids = [f"u{i}" for i in range(n)]
+    m = n * 3; ea = rng.choice(ids, m); eb = rng.choice(ids, m); keep = ea != eb
+    edges = pd.DataFrame({"a": ea[keep], "b": eb[keep]})
+    x = rng.binomial(1, 0.5, n); xvec = dict(zip(ids, x))
+    ne_map = neighbor_exposure(ids, xvec, edges)
+    ne = np.array([ne_map[u] for u in ids]); ne[np.isnan(ne)] = x.mean()
+
+    y_int = rng.binomial(1, 1/(1+np.exp(-(-0.5*x + 1.2*ne))))
+    d1 = pd.DataFrame({"id": ids, "x": x, "y": y_int})
+    a1 = StructuralAudit(d1, outcome="y", exposure="x", unit_id="id", edges=edges)
+    a1.assume("network_relabelling", "no interference", "SUTVA").test(["interference_check"])
+    assert a1.tests["interference_check"]["verdict"] == "unstable"
+    assert a1.tests["interference_check"]["spillover"] is not None
+
+    y_no = rng.binomial(1, 1/(1+np.exp(-(-0.5*x))))
+    d2 = pd.DataFrame({"id": ids, "x": x, "y": y_no})
+    a2 = StructuralAudit(d2, outcome="y", exposure="x", unit_id="id", edges=edges)
+    a2.assume("network_relabelling", "n", "p").test(["interference_check"])
+    assert a2.tests["interference_check"]["verdict"] == "stable"
+
+
+def test_edges_require_unique_unit_id_and_interference_needs_network():
+    d = pd.DataFrame({"id": ["a", "a", "b"], "x": [0, 1, 0], "y": [0, 1, 1]})
+    edges = pd.DataFrame({"a": ["a"], "b": ["b"]})
+    with pytest.raises(ValueError, match="unique"):
+        StructuralAudit(d, outcome="y", exposure="x", unit_id="id", edges=edges)
+    a = StructuralAudit(pd.DataFrame({"x": np.random.default_rng(0).binomial(1, .5, 50),
+                                      "y": np.random.default_rng(1).binomial(1, .5, 50)}),
+                        outcome="y", exposure="x")
+    with pytest.raises(ValueError, match="needs a network"):
+        a.test(["interference_check"])
+
+
 def test_spatial_holdout_flags_regional_heterogeneity():
     rng = np.random.default_rng(2); n = 3000
     lon = rng.uniform(0, 10, n); lat = rng.uniform(0, 10, n); x = rng.binomial(1, 0.5, n)

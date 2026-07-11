@@ -138,6 +138,24 @@ def render_report(assessment, path: str) -> str:
 
     blocks = []
     for t in assessment.tests.values():
+        if t.get("spillover") is not None:
+            sp = t["spillover"]
+            nb = ("not estimated" if sp["neighbor_exposure_coef"] is None
+                  else f"{sp['neighbor_exposure_coef']:.3f} [{sp['ci_low']:.3f}, {sp['ci_high']:.3f}]")
+            adj_est = "&mdash;" if sp["exposure_estimate_adjusted"] is None else f"{sp['exposure_estimate_adjusted']:.3f}"
+            body = (
+                "<table>"
+                f"<tr><th>neighbour-exposure effect</th><td>{nb}</td></tr>"
+                f"<tr><td>exposure estimate (ignoring neighbours)</td><td>{sp['exposure_estimate']:.3f}</td></tr>"
+                f"<tr><td>exposure estimate (accounting for neighbours)</td><td>{adj_est}</td></tr>"
+                f"<tr><td>units with &ge;1 neighbour</td><td>{sp['n_with_neighbors']}</td></tr></table>")
+            blocks.append(
+                "<h2>attack: {test} {chip}</h2><p class='meta'>probes: {inv}</p>{body}"
+                "<p class='reading'>{reading}</p>".format(
+                    test=_esc(t["test"].replace("_", " ")), chip=_chip(t["verdict"]),
+                    inv=_esc(t["invariance"].replace("_", " ")), body=body,
+                    reading=_esc(t["reading"])))
+            continue
         if t.get("adjustment") is not None:
             aj = t["adjustment"]
             fmt = lambda s: _esc(", ".join(s)) if s else "&#8709;"

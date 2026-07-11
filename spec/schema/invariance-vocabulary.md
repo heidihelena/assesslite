@@ -22,7 +22,7 @@ true; the ledger records it so it can be attacked.
 | `causal_graph` | none — this is the assumption that the analyst's declared DAG is correct | licensing every adjustment-set and identification claim read off the graph |
 | `adjustment_sufficiency` | none — this is the assumption that the covariates adjusted identify the effect (satisfy the backdoor criterion in the declared graph) | reading the adjusted estimate as the causal effect |
 | `spatial_translation` | translate the spatial field | pooling one mechanism across locations; attacked by `spatial_holdout` (leave-one-spatial-block-out) |
-| `network_relabelling` | relabel nodes preserving graph structure | pooling across network positions (not yet implemented) |
+| `network_relabelling` | relabel nodes preserving graph structure | treating units as non-interfering (SUTVA); attacked by `interference_check` (does the outcome depend on neighbours' exposure?) |
 
 `unobserved_confounding` is different in kind from the transformation invariances above:
 it is not a symmetry of the data but the no-unmeasured-confounding assumption itself. Its

@@ -160,16 +160,19 @@ def _fit_cox(X, time, status, strata=None, max_iter=50, tol=1e-8):
     return beta, np.sqrt(np.diag(cov))
 
 
-def fit_estimate(analysis: dict, data: pd.DataFrame, strata=()) -> Optional[dict]:
+def fit_estimate(analysis: dict, data: pd.DataFrame, strata=(), coef_of=None) -> Optional[dict]:
     """Fit the declared estimator; return dict(value, se, ci_low, ci_high, n) or None.
 
     `strata` names variables to condition on without pooling: Cox strata (separate
-    baseline hazards) or GLM fixed-effect factors. Used by the assumption lattice.
+    baseline hazards) or GLM fixed-effect factors. `coef_of` names the term to report
+    (defaults to the exposure); used by the interference check to read the
+    neighbour-exposure coefficient.
     """
     exposure = analysis["exposure"]
     covariates = list(analysis["covariates"])
     outcome_cols = analysis["outcome_cols"]
     estimator = analysis["estimator"]
+    term = coef_of if coef_of is not None else exposure
     strata = [s for s in strata if s not in [exposure] + covariates]
 
     used = list(outcome_cols) + [exposure] + covariates + list(strata)
@@ -198,7 +201,7 @@ def fit_estimate(analysis: dict, data: pd.DataFrame, strata=()) -> Optional[dict
     except (np.linalg.LinAlgError, ValueError, FloatingPointError):
         return None
 
-    idx = [k for k, nm in enumerate(names) if str(nm).startswith(exposure)]
+    idx = [k for k, nm in enumerate(names) if str(nm).startswith(term)]
     if not idx:
         return None
     k = idx[0]
