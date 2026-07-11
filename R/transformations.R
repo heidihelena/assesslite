@@ -107,6 +107,7 @@ test_subgroup_stability <- function(audit) {
 #' @param outcome_node graph node to treat as the outcome for adjustment_check
 #'   (default: the model's outcome column).
 #' @param spatial_k grid resolution (k x k blocks) for spatial_holdout (default 3).
+#' @param spatial_knn neighbours for the spatial_autocorrelation weight matrix (default 8).
 #' @param tip_ratio decision threshold on the ratio scale for confounding_scenarios,
 #'   or NULL for the null (default NULL).
 #' @param confounder_prevalence assumed confounder prevalence for
@@ -116,13 +117,14 @@ test_invariance <- function(audit,
                             tests = c("unit_permutation", "cluster_holdout",
                                       "temporal_split", "subgroup_stability"),
                             seed = 1, confounding_benchmark = 1.25, outcome_node = NULL,
-                            spatial_k = 3, tip_ratio = NULL, confounder_prevalence = 0.2) {
+                            spatial_k = 3, tip_ratio = NULL, confounder_prevalence = 0.2,
+                            spatial_knn = 8) {
   stopifnot(inherits(audit, "structural_audit"))
   set.seed(seed)
   known <- c("unit_permutation", "cluster_holdout", "temporal_split",
              "subgroup_stability", "confounding_sensitivity", "graph_check",
              "adjustment_check", "spatial_holdout", "interference_check",
-             "positivity_check", "confounding_scenarios")
+             "positivity_check", "confounding_scenarios", "spatial_autocorrelation")
   bad <- setdiff(tests, known)
   if (length(bad) > 0) stop("unknown tests: ", paste(bad, collapse = ", "))
   target_invariance <- function(t) switch(t,
@@ -137,7 +139,8 @@ test_invariance <- function(audit,
     spatial_holdout         = "spatial_translation",
     interference_check      = "network_relabelling",
     positivity_check        = "positivity",
-    confounding_scenarios   = "unobserved_confounding")
+    confounding_scenarios   = "unobserved_confounding",
+    spatial_autocorrelation = "spatial_independence")
   for (t in tests) {
     inv <- target_invariance(t)
     if (identical(ledger_status(audit, inv), "rejected")) {
@@ -156,7 +159,8 @@ test_invariance <- function(audit,
       spatial_holdout         = test_spatial_holdout(audit, spatial_k),
       interference_check      = test_interference(audit),
       positivity_check        = test_positivity(audit),
-      confounding_scenarios   = test_confounding_scenarios(audit, confounder_prevalence, tip_ratio))
+      confounding_scenarios   = test_confounding_scenarios(audit, confounder_prevalence, tip_ratio),
+      spatial_autocorrelation = test_spatial_autocorrelation(audit, spatial_knn))
     audit$tests[[t]] <- res
     audit <- mark_tested(audit, res$invariance, res$verdict)
   }

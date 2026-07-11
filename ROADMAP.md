@@ -22,7 +22,18 @@ of an audit file is a `spec/` change and bumps the spec version.
   Python-written audits both conform to `spec/schema/audit.schema.json` (the round-trip
   contract). Brought forward from v0.5 once the spec froze.
 
-## v0.3 — in progress
+## v0.4 — in progress
+
+- **Spatial autocorrelation (the random-field diagnostic)** — **done.** `spatial_autocorrelation`
+  attacks the new `spatial_independence` invariance: Moran's I on the outcome-model residuals
+  (martingale for Cox via a Breslow baseline hazard, response for GLMs) over a row-standardised
+  k-nearest-neighbour weight matrix, with Cliff-Ord normality moments so the test is
+  deterministic — R and Python agree bit-for-bit. Resolved residual autocorrelation means the
+  effective sample size is smaller than n and i.i.d.-style intervals overstate precision. This
+  is the diagnostic that says whether a spatial-process model is needed; fitting one remains
+  future work. Spec: `spec/spatial.md`.
+
+## v0.3 — done
 
 - **Simulation-based violation (confounding scenario array)** — **done.**
   `confounding_scenarios` is a deterministic bias-analysis array (Lin–Psaty–Kronmal;

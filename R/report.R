@@ -144,6 +144,21 @@ render_report <- function(audit, path) {
                      esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
                      esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
     }
+    if (!is.null(t$autocorrelation)) {
+      ac <- t$autocorrelation
+      val <- function(v, d=4) if (is.null(v) || is.na(v)) "&mdash;" else formatC(v, format="g", digits=d)
+      body <- sprintf("<table>
+         <tr><th>Moran's I (residuals)</th><td>%s</td></tr>
+         <tr><td>expected under independence</td><td>%s</td></tr>
+         <tr><td>z, p</td><td>%s, %s</td></tr>
+         <tr><td>weights / residuals</td><td>%s-nearest-neighbour / %s (n = %s)</td></tr></table>",
+        val(ac$moran_i), val(ac$expected), val(ac$z), val(ac$p_value),
+        val(ac$k, 1), if (is.null(ac$residual_type) || is.na(ac$residual_type)) "&mdash;" else esc(ac$residual_type),
+        val(ac$n, 6))
+      return(sprintf("<h2>attack: %s %s</h2><p class='meta'>probes: %s</p>%s<p class='reading'>%s</p>",
+                     esc(gsub("_", " ", t$test)), verdict_chip(t$verdict),
+                     esc(gsub("_", " ", t$invariance)), body, esc(t$reading)))
+    }
     if (!is.null(t$scenarios)) {
       sc <- t$scenarios
       rrs <- sort(unique(vapply(sc$cells, function(c) c$rr_uy, numeric(1))))

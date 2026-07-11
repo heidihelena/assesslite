@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from . import autocorrelation as _autocorr
 from . import decision as _decision
 from . import export as _export
 from . import graph as _graph
@@ -34,13 +35,14 @@ INVARIANCE_VOCABULARY = (
     "adjustment_sufficiency",
     "positivity",
     "spatial_translation",
+    "spatial_independence",
     "network_relabelling",
 )
 
 _DEFAULT_TESTS = ("unit_permutation", "cluster_holdout", "temporal_split", "subgroup_stability")
 _KNOWN_TESTS = _DEFAULT_TESTS + ("confounding_sensitivity", "graph_check", "adjustment_check",
                                  "spatial_holdout", "interference_check", "positivity_check",
-                                 "confounding_scenarios")
+                                 "confounding_scenarios", "spatial_autocorrelation")
 
 
 def invariance_vocabulary() -> tuple:
@@ -191,7 +193,7 @@ class StructuralAudit:
     # --- attacks --------------------------------------------------------------
     def test(self, tests=_DEFAULT_TESTS, seed: int = 1, confounding_benchmark: float = 1.25,
              outcome_node=None, spatial_k: int = 3, tip_ratio=None,
-             confounder_prevalence: float = 0.2):
+             confounder_prevalence: float = 0.2, spatial_knn: int = 8):
         """Run attacks against the declared invariances.
 
         tests may include confounding_sensitivity (E-value) and graph_check /
@@ -216,6 +218,7 @@ class StructuralAudit:
             "positivity_check": lambda: _positivity.test_positivity(self),
             "confounding_scenarios": lambda: _scenarios.test_confounding_scenarios(
                 self, confounder_prevalence, tip_ratio),
+            "spatial_autocorrelation": lambda: _autocorr.test_spatial_autocorrelation(self, spatial_knn),
         }
         for t in tests:
             inv = _tf.target_invariance(self, t)

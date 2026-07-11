@@ -209,3 +209,55 @@ def fit_estimate(analysis: dict, data: pd.DataFrame, strata=(), coef_of=None) ->
     if not (np.isfinite(est) and np.isfinite(s)):
         return None
     return {"value": est, "se": s, "ci_low": est - 1.96 * s, "ci_high": est + 1.96 * s, "n": n}
+
+
+def model_residuals(analysis: dict, data: pd.DataFrame):
+    """Residuals of the declared outcome model: martingale for Cox (Breslow
+    baseline hazard), response (y - mu) for GLMs. Returns (residuals, positional
+    row indices into `data` for the complete cases used), or (None, None)."""
+    exposure = analysis["exposure"]
+    covariates = list(analysis["covariates"])
+    outcome_cols = analysis["outcome_cols"]
+    estimator = analysis["estimator"]
+
+    used = list(outcome_cols) + [exposure] + covariates
+    mask = data[used].notna().all(axis=1)
+    cc = data.loc[mask, used]
+    idx = np.where(mask.to_numpy())[0]
+    if cc.shape[0] < len(used) + 2:
+        return None, None
+    try:
+        if estimator == "coxph":
+            X, _ = _design_matrix(cc, exposure, covariates, intercept=False)
+            time = cc[outcome_cols[0]].to_numpy(dtype=float)
+            status = cc[outcome_cols[1]].to_numpy(dtype=float)
+            beta, _ = _fit_cox(X, time, status)
+            theta = np.exp(np.clip(X @ beta, -30, 30))
+            order = np.argsort(time, kind="mergesort")          # ascending
+            t_s, s_s, th_s = time[order], status[order], theta[order]
+            suffix = np.cumsum(th_s[::-1])[::-1]                # risk-set theta sums
+            H = np.zeros(len(t_s))
+            cum = 0.0
+            i = 0
+            n = len(t_s)
+            while i < n:
+                j = i
+                while j < n and t_s[j] == t_s[i]:
+                    j += 1
+                dcount = s_s[i:j].sum()
+                if dcount > 0:
+                    cum += dcount / suffix[i]
+                H[i:j] = cum
+                i = j
+            mart = np.empty(n)
+            mart[order] = s_s - H * th_s
+            return mart, idx
+        else:
+            X, _ = _design_matrix(cc, exposure, covariates, intercept=True)
+            y = cc[outcome_cols[0]].to_numpy(dtype=float)
+            beta, _ = _fit_glm(X, y, estimator)
+            eta = X @ beta
+            mu = 1.0 / (1.0 + np.exp(-np.clip(eta, -30, 30))) if estimator == "glm_binomial" else eta
+            return y - mu, idx
+    except (np.linalg.LinAlgError, ValueError, FloatingPointError):
+        return None, None
