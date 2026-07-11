@@ -97,12 +97,21 @@ test_subgroup_stability <- function(audit) {
 #' Run attacks against the declared invariances
 #'
 #' @param audit a structural_audit object with a populated ledger.
-#' @param tests character vector from: unit_permutation, cluster_holdout,
-#'   temporal_split, subgroup_stability, confounding_sensitivity.
-#' @param seed integer seed for the permutation test, recorded implicitly in
-#'   the audit through the variant estimates.
+#' @param tests character vector of attacks to run: unit_permutation,
+#'   cluster_holdout, temporal_split, subgroup_stability, confounding_sensitivity,
+#'   confounding_scenarios, graph_check, adjustment_check, positivity_check,
+#'   spatial_holdout, interference_check.
+#' @param seed integer seed for the permutation test.
 #' @param confounding_benchmark plausible unmeasured-confounding strength on the
 #'   E-value (risk-ratio) scale, used by confounding_sensitivity (default 1.25).
+#' @param outcome_node graph node to treat as the outcome for adjustment_check
+#'   (default: the model's outcome column).
+#' @param spatial_k grid resolution (k x k blocks) for spatial_holdout (default 3).
+#' @param tip_ratio decision threshold on the ratio scale for confounding_scenarios,
+#'   or NULL for the null (default NULL).
+#' @param confounder_prevalence assumed confounder prevalence for
+#'   confounding_scenarios (default 0.2).
+#' @return the audit with the requested attacks recorded and ledger verdicts updated.
 test_invariance <- function(audit,
                             tests = c("unit_permutation", "cluster_holdout",
                                       "temporal_split", "subgroup_stability"),

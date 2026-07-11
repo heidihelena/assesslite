@@ -70,6 +70,10 @@ limitations_paragraph <- function(audit) {
 }
 
 #' Render the audit as a self-contained HTML report
+#'
+#' @param audit a structural_audit object after `decide()`.
+#' @param path file path to write the HTML report to.
+#' @return the path, invisibly.
 render_report <- function(audit, path) {
   a <- audit$analysis; s <- audit$structure; e <- audit$estimate; d <- audit$decision
   if (is.null(d)) stop("run decide() before rendering; a report without a decision is not complete")
@@ -129,7 +133,7 @@ render_report <- function(audit, path) {
       chip_of <- c(consistent = "ok", violated = "bad",
                    not_resolvable = "nr", not_testable = "nr")
       rows <- paste0(vapply(t$implications, function(im) {
-        val <- if (is.na(im$partial_r)) "—"
+        val <- if (is.na(im$partial_r)) "&mdash;"
                else sprintf("r = %.3f, p = %s", im$partial_r,
                             if (is.na(im$p_value)) "NA" else formatC(im$p_value, format = "g", digits = 2))
         sprintf("<tr><td>%s</td><td>%s</td><td><span class='chip %s'>%s</span></td></tr>",
@@ -238,10 +242,10 @@ render_report <- function(audit, path) {
   }
 
   html <- sprintf("<!doctype html><html><head><meta charset='utf-8'>
-<title>structural audit — %s</title><style>%s</style></head><body><main>
+<title>structural audit &mdash; %s</title><style>%s</style></head><body><main>
 <h1>Structural audit</h1>
-<p class='meta'>%s · unit: %s · %s · engine assesslite %s · core spec %s · %s ·
- data %d × %d, md5 %s</p>
+<p class='meta'>%s &middot; unit: %s &middot; %s &middot; engine assesslite %s &middot; core spec %s &middot; %s &middot;
+ data %d &times; %d, md5 %s</p>
 
 <h2>declared structure</h2>
 <table>

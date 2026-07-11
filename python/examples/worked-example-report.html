@@ -27,7 +27,7 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <h1>Structural audit</h1>
 <p class='meta'>conditional hazard ratio for guideline adherence, adjusted for age, sex, stage · unit: patient · coxph ·
  engine assesslite-python 0.3.0 · core spec 0.1 ·
- 2026-07-11T15:15:20+0300 · data 2506 × 8,
+ 2026-07-11T18:52:19+0300 · data 2506 × 8,
  md5 93ca8ff36545</p>
 
 <h2>declared structure</h2>
@@ -79,7 +79,7 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 <tr><td>sex _||_ age | {}</td><td>r = 0.041, p = 0.039</td><td><span class='chip ok'>consistent</span></td></tr>
 <tr><td>sex _||_ stage | {}</td><td>—</td><td><span class='chip nr'>not testable</span></td></tr>
 <tr><td>adherence _||_ sex | {age, stage}</td><td>r = -0.038, p = 0.058</td><td><span class='chip ok'>consistent</span></td></tr></table><p class='reading'>every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph — Markov-equivalent graphs share these implications</p>
-<h2>attack: adjustment check <span class="chip ok">stable</span></h2><p class='meta'>probes: adjustment sufficiency</p><table><tr><th>exposure &rarr; outcome</th><td>adherence &rarr; status</td></tr><tr><td>adjusted for</td><td>{age, sex, stage}</td></tr><tr><td>sufficient set (from graph)</td><td>{stage, age}</td></tr><tr><td>missing (graph says adjust, you did not)</td><td>{&#8709;}</td></tr><tr><td>over-adjustment (descendant of exposure)</td><td>{&#8709;}</td></tr></table><p class='reading'>the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -&gt; status in the declared graph; the adjustment agrees with the graph (a sufficient set is {stage, age})</p>
+<h2>attack: adjustment check <span class="chip ok">stable</span></h2><p class='meta'>probes: adjustment sufficiency</p><table><tr><th>exposure &rarr; outcome</th><td>adherence &rarr; status</td></tr><tr><td>adjusted for</td><td>{age, sex, stage}</td></tr><tr><td>sufficient set (from graph)</td><td>{age, stage}</td></tr><tr><td>missing (graph says adjust, you did not)</td><td>{&#8709;}</td></tr><tr><td>over-adjustment (descendant of exposure)</td><td>{&#8709;}</td></tr></table><p class='reading'>the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -&gt; status in the declared graph; the adjustment agrees with the graph (a sufficient set is {age, stage})</p>
 
 <h2>decision</h2>
 <div class='decision proceed'><span class='status'>PROCEED</span>

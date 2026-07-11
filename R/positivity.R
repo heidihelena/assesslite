@@ -23,8 +23,11 @@ test_positivity <- function(audit, alphas = c(0.01, 0.02, 0.05, 0.10)) {
       data.frame(label = character(), estimate = numeric(), se = numeric(),
                  ci_low = numeric(), ci_high = numeric(), n = integer()), 0))
 
-  # ps is over complete cases of the propensity model; align to rows
-  ps_full <- rep(NA_real_, nrow(d)); ps_full[as.integer(names(ps))] <- ps
+  # ps is over complete cases of the propensity model, named by row names; align to
+  # positions by matching row names (works for default and custom row names alike)
+  ps_full <- rep(NA_real_, nrow(d))
+  pos <- match(names(ps), rownames(d))
+  ps_full[pos[!is.na(pos)]] <- ps[!is.na(pos)]
   rows <- list(); n_failed <- 0
   for (al in alphas) {
     keep <- !is.na(ps_full) & ps_full >= al & ps_full <= 1 - al

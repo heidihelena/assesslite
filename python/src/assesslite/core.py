@@ -68,9 +68,12 @@ class StructuralAudit:
                  unit: str = "unit", estimand: str | None = None):
         if not isinstance(data, pd.DataFrame):
             raise TypeError("data must be a pandas DataFrame")
-        covariates = list(covariates or [])
-        subgroups = list(subgroups or [])
+        # a bare string is one name, not an iterable of characters
+        covariates = [covariates] if isinstance(covariates, str) else list(covariates or [])
+        subgroups = [subgroups] if isinstance(subgroups, str) else list(subgroups or [])
         if coords is not None:
+            if isinstance(coords, str):
+                raise ValueError("coords must be two column names, (x, y) or (lon, lat)")
             coords = list(coords)
             if len(coords) != 2:
                 raise ValueError("coords must be two column names, (x, y) or (lon, lat)")

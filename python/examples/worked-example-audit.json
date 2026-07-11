@@ -19,7 +19,9 @@
     "subgroups": [
       "stage"
     ],
-    "coords": null
+    "coords": null,
+    "unit_id": null,
+    "n_edges": null
   },
   "ledger": [
     {
@@ -405,7 +407,7 @@
       "verdict": "stable",
       "variants": [],
       "n_failed_refits": 0,
-      "reading": "the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -> status in the declared graph; the adjustment agrees with the graph (a sufficient set is {stage, age})",
+      "reading": "the adjusted covariates {age, sex, stage} satisfy the backdoor criterion for adherence -> status in the declared graph; the adjustment agrees with the graph (a sufficient set is {age, stage})",
       "adjustment": {
         "exposure": "adherence",
         "outcome": "status",
@@ -415,8 +417,8 @@
           "stage"
         ],
         "sufficient_set": [
-          "stage",
-          "age"
+          "age",
+          "stage"
         ],
         "valid": true,
         "identifiable": true,
@@ -446,7 +448,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T15:15:20+0300",
+    "created": "2026-07-11T18:52:19+0300",
     "engine": "assesslite-python",
     "engine_version": "0.3.0",
     "platform": "Python 3.11.8",

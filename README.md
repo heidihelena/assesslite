@@ -108,16 +108,18 @@ from `python/`.
 
 ## Status
 
-v0.1.0 — working end-to-end in R: declaration, invariance ledger, four transformation tests
-(unit permutation, cluster holdout, temporal split, subgroup stability), three-way verdicts,
-abstention-capable decision layer, JSON audit export, HTML report. Estimators: Cox
+v0.3.0 (development) — working end-to-end in both R and Python against one shared schema.
+The baseline: declaration, invariance ledger, the four transformation attacks (unit
+permutation, cluster holdout, temporal split, subgroup stability), three-way verdicts, an
+abstention-capable decision layer, JSON audit export, and an HTML report. Estimators: Cox
 proportional hazards and GLM. See `inst/examples/worked-example.R` and `ROADMAP.md`.
 
 The **Python** interface is built to the same spec (pure numpy/pandas; Cox reproduces R's
 `coxph` Breslow fit exactly) with a pytest suite that validates its audit records against the
-shared schema.
+shared schema. Released versions are on [PyPI](https://pypi.org/project/assesslite/) and
+archived on Zenodo.
 
-**v0.2.0** adds two attacks:
+On top of the baseline, v0.2 and v0.3 add:
 - `confounding_sensitivity` — an E-value attack (VanderWeele & Ding) on a new
   `unobserved_confounding` invariance: how strong an unmeasured confounder would have to be to
   move the interval to no effect (`spec/stability/sensitivity.md`).
@@ -154,8 +156,10 @@ lattice refits the exposure estimate under every pool-or-stratify combination an
 Hasse diagram, whether the conclusion depends on those commitments (`spec/lattice.md`). This is
 the geometric-causal-models trade-off made navigable.
 
-Not yet built: latent-node support for the graph checks, simulation-based violation testing, and
-spatial/network transformation groups.
+The full v0.3 attack set — confounding sensitivity and scenarios, DAG consistency and adjustment
+(with latent-node non-identifiability), positivity, spatial holdout, and network interference —
+is in place in both languages. Not yet built: a spatial-process (random-field) mechanism model,
+richer interference exposure mappings, and a re-estimating identification lattice; see `ROADMAP.md`.
 
 ## What this is not
 

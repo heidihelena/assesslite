@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,9 +8,14 @@ version = "0.3.0"
 description = "AssessLite: test what your analysis depends on — structural assumption assessment for causal analysis"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Heidi Andersén", email = "andersenheidihelena@gmail.com" }]
 keywords = ["causal inference", "sensitivity analysis", "invariance", "assumptions", "epidemiology"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
 dependencies = [
     "numpy>=1.22",
     "pandas>=1.4",

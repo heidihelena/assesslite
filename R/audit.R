@@ -28,8 +28,14 @@ invariance_vocabulary <- function() {
 #' @param cluster column name of the cluster variable (hospital, site), or NULL.
 #' @param time column name of the calendar-time variable, or NULL.
 #' @param subgroups character vector of subgroup variable names.
+#' @param coords length-2 character vector of coordinate columns c(x, y) for the
+#'   spatial attack, or NULL.
+#' @param unit_id column naming each unit, required with `edges`, or NULL.
+#' @param edges a two-column data frame of undirected unit-id pairs defining a
+#'   network for the interference attack, or NULL.
 #' @param unit what one row is (e.g. "patient").
 #' @param estimand plain-language statement of the target quantity.
+#' @return a structural_audit object with the full-sample estimate fitted.
 structural_audit <- function(data, outcome, exposure, covariates = character(),
                              cluster = NULL, time = NULL, subgroups = character(),
                              coords = NULL, unit_id = NULL, edges = NULL,

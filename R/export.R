@@ -65,6 +65,10 @@ audit_as_list <- function(audit) {
 }
 
 #' Write the audit to a JSON file conforming to the core audit schema
+#'
+#' @param audit a structural_audit object after `decide()`.
+#' @param path file path to write the JSON audit record to.
+#' @return the path, invisibly.
 write_audit <- function(audit, path) {
   jsonlite::write_json(audit_as_list(audit), path,
                        auto_unbox = TRUE, pretty = TRUE, digits = 10,

@@ -142,7 +142,7 @@ test_graph_check <- function(audit, alpha = 0.05, effect_floor = 0.1) {
         "testable implications was underpowered; the graph is not fully resolvable at this n"), n_testable),
     stable = sprintf(paste0("every one of the %d testable implied independencies is consistent with ",
       "the data (partial-correlation test); the data do not contradict the declared graph. This does ",
-      "not establish the graph — Markov-equivalent graphs share these implications"), n_testable))
+      "not establish the graph -- Markov-equivalent graphs share these implications"), n_testable))
 
   list(test = "graph_check", invariance = "causal_graph", verdict = verdict, metrics = NULL,
        implications = imps,

@@ -13,7 +13,9 @@
     "cluster": "hospital",
     "time": "diagnosis_year",
     "subgroups": ["stage"],
-    "coords": null
+    "coords": null,
+    "unit_id": null,
+    "n_edges": null
   },
   "ledger": [
     {
@@ -354,7 +356,7 @@
       "verdict": "stable",
       "variants": [],
       "n_failed_refits": 0,
-      "reading": "every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph <U+2014> Markov-equivalent graphs share these implications",
+      "reading": "every one of the 2 testable implied independencies is consistent with the data (partial-correlation test); the data do not contradict the declared graph. This does not establish the graph -- Markov-equivalent graphs share these implications",
       "implications": [
         {
           "claim": "stage _||_ age | {}",
@@ -422,7 +424,7 @@
     }
   },
   "provenance": {
-    "created": "2026-07-11T15:15:16+0300",
+    "created": "2026-07-11T18:52:16+0300",
     "engine": "assesslite",
     "engine_version": "0.3.0",
     "platform": "R version 4.4.2 (2024-10-31)",
