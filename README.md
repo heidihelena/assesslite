@@ -13,11 +13,12 @@ licensed by invariance assumptions — "these transformations of the system leav
 mechanism unchanged" — usually left implicit inside exchangeability, i.i.d. sampling, or
 transportability. AssessLite makes them explicit, attacks them, and records what survived.
 
-```
-scientific structure  →  declared invariances  →  what each one licenses
-    →  transformation attacks  →  three-way verdicts  →  decision (proceed / conditional / abstain)
-    →  exported audit record
-```
+<p align="center">
+  <img
+    src="assets/hero-workflow.svg"
+    alt="AssessLite workflow: scientific structure, declared invariances, transformation attacks, three-way verdicts (stable, unstable, not resolvable), and the analyst's decision to proceed, proceed conditionally or abstain — with a claim ledger, deterministic attacks and an exported JSON + HTML audit record as the supporting rail"
+    width="1200">
+</p>
 
 It does not report truth. It records which invariances were asserted, why, which were
 attacked, what happened, and whether the conclusion survived. Verdicts are three-way —
